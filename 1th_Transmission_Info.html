@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제11차 장기 송변전 설비 계획: 미래 전력망 인사이트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Application Structure Plan: 
+        The infographic is structured as a single-page, scrollable application with a sticky top navigation bar. It follows a narrative flow:
+        1.  **계획의 서막 (Plan Overture):** Introduction with headline stats (Total Investment, Economic Impact). Goal: Hook the user.
+        2.  **투자 지형도 (Investment Landscape):** Detailed breakdown of the 72.8조 원 investment using a donut chart. Goal: Inform about resource allocation.
+        3.  **메가 프로젝트: 미래 동력 (Mega Projects: Future Engines):** Focus on 서해안 HVDC and 용인 반도체 클러스터. Uses HTML timeline for HVDC stages and bar chart for Yongin's power demand. Goal: Showcase key initiatives.
+        4.  **전력망의 진화 (Grid Evolution):** Highlights new technologies (VSC-HVDC, Flywheel, ESS-STATCOM) using icon-based cards. Goal: Illustrate technological advancements.
+        5.  **산업 지형 변화 (Shifting Industrial Landscape):** Economic impact figures (production/employment), key challenges (public acceptance, financing). Goal: Discuss broader implications.
+        This structure was chosen to guide the user from the high-level overview to specific impactful projects, technological shifts, and finally to the broader economic and societal consequences, facilitating a comprehensive understanding of the 11th Transmission and Substation Facility Plan.
+        -->
+    <!-- Visualization & Content Choices:
+        -   **Plan Overture (Headline Stats):** Data: Total Investment (72.8조 원), Production/Employment Impact. Goal: Inform. Viz: Single Big Numbers (styled HTML). Interaction: None. Justification: Immediate impact. Method: HTML/CSS. CONFIRMED NO SVG/Mermaid.
+        -   **Investment Landscape (Investment Breakdown):** Data: Investment by purpose (무탄소 전원 50.74조, 첨단산업 22.01조, HVDC/안정화 18.2조). Goal: Compare/Inform. Viz: Donut Chart. Interaction: Tooltips. Justification: Clear proportion display. Lib: Chart.js (Canvas). CONFIRMED NO SVG/Mermaid.
+        -   **Mega Projects - 서해안 HVDC:** Data: Route change (4GWx2 to 2GWx4), VSC-HVDC, completion stages (2031, 2036, 2038). Goal: Change/Inform. Viz: HTML Timeline, Info Cards. Interaction: None planned for simplicity, focus on clear visual steps. Justification: Show project evolution and key specs. Method: HTML/CSS (Tailwind). CONFIRMED NO SVG/Mermaid.
+        -   **Mega Projects - 용인 반도체 클러스터:** Data: Power demand (>10GW by 2050), phased supply (LNG, HVDC). Goal: Change/Inform. Viz: Bar Chart (phased supply sources), Stat Card (total demand). Interaction: Tooltips. Justification: Visualize massive demand and phased solution. Lib: Chart.js (Canvas). CONFIRMED NO SVG/Mermaid.
+        -   **Grid Evolution (New Technologies):** Data: VSC-HVDC, Flywheel Synchronous Condenser, ESS-STATCOM. Goal: Inform/Organize. Viz: Icon-based cards (Unicode/HTML) for each tech with brief description. Interaction: None planned. Justification: Concise overview of key technologies. Method: HTML/CSS (Tailwind). CONFIRMED NO SVG/Mermaid.
+        -   **Shifting Industrial Landscape (Challenges):** Data: Key challenges like public acceptance, financing, policy consistency. Goal: Inform/Organize. Viz: Styled List. Interaction: None. Justification: Clearly outline obstacles. Method: HTML/CSS (Tailwind). CONFIRMED NO SVG/Mermaid.
+        All Chart.js instances will use label wrapping (16char) and the specified tooltip config. Chart containers will be styled as per requirements.
+        -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; scroll-behavior: smooth; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        .text-balance { text-wrap: balance; }
+
+        .bg-brand-light { background-color: #F0F8FF; } /* AliceBlue - Light, airy blue */
+        .text-brand-deep { color: #005A9C; } /* Darker, stronger blue for headings */
+        .text-brand-accent { color: #FF6F61; } /* Coral - Vibrant accent */
+        .bg-brand-accent { background-color: #FF6F61; }
+        .text-content-primary { color: #334155; } /* Slate 700 for primary text */
+        .text-content-secondary { color: #64748B; } /* Slate 500 for secondary text */
+
+        .nav-link { transition: color 0.3s ease, border-bottom-color 0.3s ease; border-bottom: 2px solid transparent; padding-bottom: 4px;}
+        .nav-link:hover, .nav-link.active { color: #FF6F61; border-bottom-color: #FF6F61; }
+        
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background-color: #FF6F61;
+            margin-top: 0.5rem;
+        }
+        .section-title.center::after { margin-left: auto; margin-right: auto; }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Max width for readability */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 350px; /* Max height constraint */
+        }
+        @media (min-width: 768px) { /* md */
+            .chart-container {
+                height: 350px;
+                max-width: 600px;
+            }
+        }
+        @media (min-width: 1024px) { /* lg */
+             .chart-container {
+                max-width: 500px; /* Keep it readable even on large screens */
+            }
+        }
+        
+        .timeline { position: relative; padding-left: 2.5rem; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.625rem; /* 10px */
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #E0E7FF; /* Light Indigo for timeline track */
+        }
+        .timeline-item { position: relative; margin-bottom: 2rem; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.25rem; /* Adjust to center on the line */
+            top: 0.125rem; /* Align with text */
+            width: 1.25rem; /* 20px */
+            height: 1.25rem; /* 20px */
+            border-radius: 50%;
+            background-color: #FF6F61; /* Accent color for marker */
+            border: 3px solid #F0F8FF; /* Match light background */
+        }
+        .stat-value {
+            font-size: 2.5rem; /* 40px */
+            line-height: 1.2;
+        }
+         @media (min-width: 768px) {
+            .stat-value { font-size: 3rem; /* 48px */ }
+        }
+    </style>
+</head>
+<body class="bg-brand-light text-content-primary antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-brand-deep">미래 전력망 인사이트</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link text-gray-700 hover:text-brand-accent">계획 개요</a>
+                        <a href="#investment" class="nav-link text-gray-700 hover:text-brand-accent">투자 지형도</a>
+                        <a href="#megaprojects" class="nav-link text-gray-700 hover:text-brand-accent">핵심 프로젝트</a>
+                        <a href="#gridevolution" class="nav-link text-gray-700 hover:text-brand-accent">전력망 진화</a>
+                        <a href="#economicimpact" class="nav-link text-gray-700 hover:text-brand-accent">산업·경제 전망</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-brand-deep mb-6 text-balance">제11차 장기 송변전 설비 계획: 대한민국 전력의 내일을 그리다</h1>
+                <p class="text-lg md:text-xl text-content-secondary max-w-3xl mx-auto mb-12 text-balance">
+                    향후 15년간(2024-2038) 대한민국 전력 인프라의 대대적인 혁신을 목표로 하는 제11차 장기 송변전 설비 계획. 첨단산업의 폭발적 전력 수요, 탄소중립 목표, 계통 안정성 강화라는 시대적 과제에 대응하기 위한 청사진입니다.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-4xl mx-auto">
+                    <div class="card p-6 md:p-8">
+                        <h3 class="text-lg font-semibold text-brand-deep mb-2">총 투자 규모</h3>
+                        <p class="stat-value font-bold text-brand-accent">72.8조<span class="text-2xl">원</span></p>
+                        <p class="text-sm text-content-secondary mt-1">(2024-2038)</p>
+                    </div>
+                    <div class="card p-6 md:p-8">
+                        <h3 class="text-lg font-semibold text-brand-deep mb-2">예상 생산유발 효과</h3>
+                        <p class="stat-value font-bold text-brand-accent">134조<span class="text-2xl">원</span></p>
+                    </div>
+                    <div class="card p-6 md:p-8">
+                        <h3 class="text-lg font-semibold text-brand-deep mb-2">예상 고용유발 효과</h3>
+                        <p class="stat-value font-bold text-brand-accent">48만<span class="text-2xl">명</span></p>
+                    </div>
+                </div>
+                 <p class="mt-12 text-md text-content-secondary max-w-3xl mx-auto">
+                    이 거대한 투자는 단순한 인프라 확충을 넘어, AI, 데이터센터, 첨단 제조업, 그린수소 등 미래 산업으로의 전환을 뒷받침하는 핵심 동력입니다.
+                </p>
+            </div>
+        </section>
+
+        <section id="investment" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-brand-deep mb-4 section-title center text-center">투자 지형도: 72.8조 원, 어디에 쓰이나?</h2>
+                <p class="text-lg text-content-secondary max-w-2xl mx-auto mb-12 text-center text-balance">
+                    제11차 계획의 막대한 예산은 국가 에너지 목표 달성을 위해 전략적으로 배분됩니다. 무탄소 전원 연계, 첨단산업 지원, 그리고 미래 전력망의 안정성 확보가 핵심입니다.
+                </p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 md:gap-12 items-center">
+                    <div class="lg:col-span-2">
+                        <div class="chart-container p-4 sm:p-6">
+                            <canvas id="investmentDonutChart"></canvas>
+                        </div>
+                         <p class="text-center text-xs text-content-secondary mt-2">주요 투자 분야별 비중 (단위: 조 원)</p>
+                    </div>
+                    <div class="lg:col-span-3 space-y-6">
+                        <div class="card p-6">
+                            <h4 class="text-xl font-semibold text-brand-deep mb-2">🌱 무탄소 전원 등 발전 연계: 50.74조 원</h4>
+                            <p class="text-content-secondary">신규 원전, 대규모 신재생에너지(태양광, 해상풍력 등) 발전단지의 원활한 계통 연계를 통해 국가 탄소중립 목표 달성에 기여합니다.</p>
+                        </div>
+                        <div class="card p-6">
+                            <h4 class="text-xl font-semibold text-brand-deep mb-2">🏭 첨단산업 등 전력공급: 22.01조 원</h4>
+                            <p class="text-content-secondary">용인 반도체 클러스터, 데이터센터 등 폭증하는 첨단산업의 전력 수요에 안정적으로 대응하여 국가 경쟁력을 강화합니다.</p>
+                        </div>
+                        <div class="card p-6">
+                            <h4 class="text-xl font-semibold text-brand-deep mb-2">⚡ HVDC 및 계통 안정화: 18.2조 원</h4>
+                            <p class="text-content-secondary">장거리 대용량 전력 전송을 위한 HVDC망 구축과 플라이휠 동기조상기, ESS-STATCOM 등 첨단 기술 도입으로 전력망의 안정성과 유연성을 높입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="megaprojects" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-brand-deep mb-12 section-title center text-center">메가 프로젝트: 미래 전력망의 핵심 동력</h2>
+                <p class="text-lg text-content-secondary max-w-3xl mx-auto mb-16 text-center text-balance">
+                    대한민국의 에너지 미래를 견인할 두 개의 거대한 축, '서해안-수도권 HVDC'와 '용인 반도체 클러스터 전력 공급' 계획을 자세히 살펴봅니다. 이들은 단순한 인프라 건설을 넘어 국가 전략 산업의 성패를 좌우할 핵심 프로젝트입니다.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
+                    <article class="card p-6 md:p-8">
+                        <h3 class="text-2xl font-semibold text-brand-deep mb-6 section-title">서해안-수도권 HVDC: '전기 고속도로'의 진화</h3>
+                        <p class="text-content-secondary mb-6">호남의 풍부한 신재생에너지를 수도권으로! 기존 4GW급 2개 루트에서 2GW급 4개 루트 (총 8GW, 전압형 VSC-HVDC)로 변경, 단계적 구축을 통해 유연성과 안정성을 높입니다.</p>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h4 class="font-semibold text-brand-deep text-lg">2031년 준공</h4>
+                                <p class="text-content-secondary text-sm">1단계 루트 (2GW)</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h4 class="font-semibold text-brand-deep text-lg">2036년 준공</h4>
+                                <p class="text-content-secondary text-sm">2단계 루트 (2GW)</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h4 class="font-semibold text-brand-deep text-lg">2038년 준공</h4>
+                                <p class="text-content-secondary text-sm">3, 4단계 루트 (각 2GW)</p>
+                            </div>
+                        </div>
+                        <p class="mt-6 text-sm text-content-secondary">
+                            VSC-HVDC 기술 채택은 대규모 신재생에너지 통합에 필수적인 유연성과 계통 지원 능력을 강화합니다. 이 '전기 고속도로'는 국가 탄소중립 목표 달성의 핵심입니다.
+                        </p>
+                    </article>
+
+                    <article class="card p-6 md:p-8">
+                        <h3 class="text-2xl font-semibold text-brand-deep mb-6 section-title">용인 반도체 클러스터: 10GW+ 전력 확보 전쟁</h3>
+                        <p class="text-content-secondary mb-1">2050년까지 수도권 최대 수요의 약 1/4에 해당하는 10GW 이상의 막대한 전력! 세계 반도체 패권을 위한 전력 공급 로드맵입니다.</p>
+                         <div class="my-6 p-4 bg-indigo-50 rounded-lg">
+                            <p class="text-center text-brand-deep font-bold text-3xl md:text-4xl">10GW+</p>
+                            <p class="text-center text-content-secondary text-sm">2050년 예상 총 전력 수요</p>
+                        </div>
+                        <div class="chart-container_small_bar h-64 max-h-72">
+                             <canvas id="yonginSupplyChart"></canvas>
+                        </div>
+                        <p class="text-center text-xs text-content-secondary mt-1 mb-4">단계별 예상 공급원 구성 (GW, 개념도)</p>
+                        <ul class="text-sm text-content-secondary space-y-1 list-disc list-inside pl-2">
+                            <li><strong>초기(~2038년):</strong> 단지 내 LNG 발전(3GW, 수소혼소) + 기존망 연계</li>
+                            <li><strong>중장기(2039년~):</strong> 장거리 송전망(서해안 HVDC 등) 추가</li>
+                            <li><strong>초장기(2044년~):</strong> 추가 전력망 보강 및 신기술 적용</li>
+                        </ul>
+                         <p class="mt-6 text-sm text-content-secondary">
+                           초기 LNG 발전은 시급성을, 장기적 저탄소 전원 활용은 RE100/CFE 목표 달성을 지원하는 실용적 전략입니다.
+                        </p>
+                    </article>
+                </div>
+            </article>
+        </section>
+
+        <section id="gridevolution" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-brand-deep mb-12 section-title center text-center">전력망의 진화: 첨단 기술로 미래를 열다</h2>
+                <p class="text-lg text-content-secondary max-w-3xl mx-auto mb-16 text-center text-balance">
+                    탄소중립 시대, 늘어나는 신재생에너지와 복잡해지는 전력 조류에 대응하기 위해 우리 전력망은 더 똑똑하고 유연해져야 합니다. 제11차 계획은 첨단 기술 도입으로 미래 전력망의 청사진을 제시합니다. (총 18.2조 원 투자)
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">⚡</div>
+                        <h4 class="text-xl font-semibold text-brand-deep mb-2">전압형 HVDC (VSC-HVDC)</h4>
+                        <p class="text-sm text-content-secondary">양방향 전력 전송, 블랙스타트, 무효전력 제어 등 우수한 성능으로 대규모 신재생에너지 통합 및 계통 안정에 핵심적입니다.</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">⚙️</div>
+                        <h4 class="text-xl font-semibold text-brand-deep mb-2">플라이휠 동기조상기</h4>
+                        <p class="text-sm text-content-secondary">회전체 관성을 이용해 계통 주파수 안정에 기여하며, 특히 인버터 기반 신재생에너지 증가에 따른 관성 저하 문제 해결에 도움을 줍니다.</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">🔋</div>
+                        <h4 class="text-xl font-semibold text-brand-deep mb-2">ESS-STATCOM</h4>
+                        <p class="text-sm text-content-secondary">ESS의 유효전력과 STATCOM의 무효전력 제어 기능을 통합, 신속한 전압 안정 및 신재생에너지 출력 변동 완화에 기여합니다.</p>
+                    </div>
+                </div>
+                <p class="mt-12 text-center text-md text-content-secondary max-w-2xl mx-auto">
+                    이러한 기술들은 신규 원전(2.8GW) 및 SMR(0.7GW), 그리고 2038년까지 121.9GW에 이를 신재생에너지 설비의 안정적인 통합을 지원하는 핵심 인프라입니다.
+                </p>
+            </div>
+        </section>
+
+        <section id="economicimpact" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <h2 class="text-3xl md:text-4xl font-bold text-brand-deep mb-12 section-title center text-center">산업·경제 전망: 도전과 기회의 공존</h2>
+                <p class="text-lg text-content-secondary max-w-3xl mx-auto mb-16 text-center text-balance">
+                    72.8조 원의 투자는 관련 산업에 큰 기회를 제공하지만, 재원 조달, 주민 수용성 확보 등은 여전히 중요한 과제입니다. '국가기간 전력망 확충 특별법'이 이러한 난관 해결에 기여할 것으로 기대됩니다.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+                    <div class="card p-6 md:p-8">
+                        <h3 class="text-2xl font-semibold text-brand-deep mb-4">주요 기회 요인</h3>
+                        <ul class="list-disc list-inside space-y-2 text-content-secondary">
+                            <li>송배전 설비 제조, 건설, 엔지니어링 서비스 시장 확대</li>
+                            <li>HVDC, ESS, 스마트그리드 등 신기술 분야 성장 촉진</li>
+                            <li>민자발전사업(IPP), 신재생에너지 개발 참여 기회 증대</li>
+                        </ul>
+                    </div>
+                    <div class="card p-6 md:p-8">
+                        <h3 class="text-2xl font-semibold text-brand-deep mb-4">주요 리스크 및 과제</h3>
+                        <ul class="list-disc list-inside space-y-2 text-content-secondary">
+                            <li>프로젝트 지연 (인허가, 주민 반대, 한전 재정)</li>
+                            <li>에너지 다소비 기업의 전기요금 인상 가능성</li>
+                            <li>'국가기간 전력망 특별법'의 실효성 확보 및 이행</li>
+                             <li>지속적인 정책 일관성 및 사회적 합의 도출</li>
+                        </ul>
+                    </div>
+                </div>
+                 <p class="mt-16 text-center text-xl font-semibold text-brand-deep">
+                    제11차 장기 송변전 설비 계획은 대한민국 에너지 전환의 중요한 이정표입니다. <br class="hidden md:inline">기회와 도전을 균형 있게 인식하고 미래를 준비해야 합니다.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 text-center p-8 mt-16">
+        <p class="text-sm">&copy; 2025 제11차 장기 송변전 설비 계획 인포그래픽. 모든 정보는 공개된 보고서 및 기사를 기반으로 합니다.</p>
+        <p class="text-xs mt-2">본 자료는 정보 제공 목적으로 제작되었으며, 투자 자문이나 법적 효력을 갖지 않습니다.</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Update active link (optional)
+                    document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        const processLabel = (label, maxLength = 16) => {
+            if (typeof label !== 'string') return label;
+            if (label.length <= maxLength) return label;
+            
+            const words = label.split(/\s+/);
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length > maxLength && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine += (currentLine.length > 0 ? ' ' : '') + word;
+                }
+            }
+            if (currentLine.length > 0) lines.push(currentLine.trim());
+            return lines.length > 0 ? lines : [label]; // Ensure it returns at least the original label if no split
+        };
+        
+        const tooltipTitleCallback = function(tooltipItems) {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+              return label.join(' ');
+            } else {
+              return label;
+            }
+        };
+
+        // Investment Donut Chart
+        const investmentDonutCtx = document.getElementById('investmentDonutChart').getContext('2d');
+        const investmentData = {
+            labels: [
+                processLabel('무탄소 전원 등 발전 연계'), 
+                processLabel('첨단산업 등 전력공급'), 
+                processLabel('HVDC 및 계통 안정화')
+            ],
+            datasets: [{
+                label: '투자액 (조 원)',
+                data: [50.74, 22.01, 18.2],
+                backgroundColor: [
+                    'rgba(0, 123, 255, 0.7)', // Vibrant Blue: #007bff
+                    'rgba(40, 167, 69, 0.7)',  // Vibrant Green: #28a745
+                    'rgba(253, 126, 20, 0.7)'  // Vibrant Orange: #fd7e14
+                ],
+                borderColor: [
+                    '#007bff',
+                    '#28a745',
+                    '#fd7e14'
+                ],
+                borderWidth: 1.5,
+                hoverOffset: 8
+            }]
+        };
+        new Chart(investmentDonutCtx, {
+            type: 'doughnut',
+            data: investmentData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { animateScale: true, animateRotate: true },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            font: { size: 11 }, 
+                            boxWidth: 20, 
+                            padding: 15,
+                            usePointStyle: true,
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback,
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed !== null) {
+                                    label += context.parsed.toFixed(2) + '조 원';
+                                }
+                                return label;
+                            }
+                        },
+                        backgroundColor: '#333',
+                        titleFont: { size: 14, weight: 'bold'},
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 4,
+                        displayColors: false,
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+
+        // Yongin Supply Bar Chart
+        const yonginSupplyCtx = document.getElementById('yonginSupplyChart').getContext('2d');
+        const yonginData = {
+            labels: [processLabel("초기 (~'38년)"), processLabel("중장기 ('39년~)"), processLabel("초장기 ('44년~)")],
+            datasets: [
+                {
+                    label: '단지 내 LNG 발전',
+                    data: [3, 1, 0.5], // Conceptual, from report analysis
+                    backgroundColor: 'rgba(0, 123, 255, 0.7)', // Vibrant Blue
+                    borderColor: '#007bff',
+                    borderWidth: 1
+                },
+                {
+                    label: '장거리 송전 (HVDC 등)',
+                    data: [0.5, 6, 8.5], // Conceptual
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)', // Vibrant Green
+                    borderColor: '#28a745',
+                    borderWidth: 1
+                },
+                {
+                    label: '기타/신기술',
+                    data: [0, 1, 1], // Conceptual
+                    backgroundColor: 'rgba(253, 126, 20, 0.7)', // Vibrant Orange
+                    borderColor: '#fd7e14',
+                    borderWidth: 1
+                }
+            ]
+        };
+        new Chart(yonginSupplyCtx, {
+            type: 'bar',
+            data: yonginData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { 
+                        stacked: true, 
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }}
+                    },
+                    y: { 
+                        stacked: true, 
+                        title: { display: true, text: '공급 용량 (GW)', font:{size:10, weight:'500'}, padding:{top:0, bottom:5}},
+                        grid: { color: '#e9ecef' },
+                        ticks: { font: { size: 10 }, stepSize: 2 }
+                    }
+                },
+                plugins: {
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { font: { size: 10 }, boxWidth: 15, padding: 10 } 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback,
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(1)} GW`;
+                            }
+                        },
+                        backgroundColor: '#333',
+                        titleFont: { size: 13, weight: 'bold'},
+                        bodyFont: { size: 11 },
+                        padding: 8,
+                        cornerRadius: 4
+                    }
+                },
+                indexAxis: 'x', // Can be 'y' for horizontal bar
+                barPercentage: 0.8,
+                categoryPercentage: 0.7
+            }
+        });
+
+        // Intersection Observer for active nav link
+        const sections = document.querySelectorAll('main section');
+        const navLinks = document.querySelectorAll('nav a.nav-link');
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.4 // Adjust this value based on when you want the link to activate
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').substring(1) === entry.target.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+    </script>
+</body>
+</html>
