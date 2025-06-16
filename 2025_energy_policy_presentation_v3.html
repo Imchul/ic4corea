@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이재명 정부 에너지 정책 변화와 사업 기회 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        #presentation-container {
+            width: 100%;
+            max-width: 1100px;
+            aspect-ratio: 16 / 9;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a202c;
+            color: white;
+            padding: 4% 5%;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+        }
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            z-index: 1;
+            pointer-events: auto;
+        }
+        .slide-header {
+            border-left: 5px solid #4299e1;
+            padding-left: 15px;
+            margin-bottom: 2rem;
+        }
+        .slide-header h1 {
+            font-size: 2.5vw;
+            font-weight: 900;
+            margin: 0;
+        }
+        .slide-header h2 {
+            font-size: 1.5vw;
+            font-weight: 400;
+            opacity: 0.8;
+            margin: 0;
+        }
+        .slide-content {
+            flex-grow: 1;
+        }
+        .nav-buttons {
+            position: absolute;
+            bottom: 3%;
+            right: 3%;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-button:hover {
+            background-color: #4299e1;
+            border-color: #4299e1;
+        }
+        .page-number {
+            position: absolute;
+            bottom: 3%;
+            left: 3%;
+            z-index: 10;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1vw;
+        }
+        /* Title Slide Specifics */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(45deg, #1a202c, #2d3748);
+        }
+        .title-slide h1 {
+            font-size: 4vw;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px rgba(66, 153, 225, 0.5);
+        }
+        .title-slide h2 {
+            font-size: 1.8vw;
+            font-weight: 300;
+            opacity: 0.8;
+            max-width: 70%;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 2rem;
+            width: 100%;
+        }
+        .icon-item {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .icon-item i {
+            font-size: 3vw;
+            color: #4299e1;
+            margin-bottom: 1rem;
+        }
+        .icon-item p {
+            font-size: 1.1vw;
+            font-weight: 500;
+        }
+        .grid-2, .grid-3 {
+            display: grid;
+            gap: 2rem;
+            height: 100%;
+        }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .card {
+            background-color: #2d3748;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .card-header i {
+            font-size: 2vw;
+            color: #63b3ed;
+        }
+        .card-header h3 {
+            font-size: 1.5vw;
+            font-weight: 700;
+        }
+        .card ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .card ul li {
+            font-size: 1vw;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #4a5568;
+            position: relative;
+            padding-left: 20px;
+        }
+        .card ul li::before {
+            content: '✓';
+            color: #63b3ed;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        .card ul li:last-child {
+            border-bottom: none;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            padding-bottom: 2rem;
+            border-left: 2px solid #4a5568;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            background-color: #4299e1;
+            border-radius: 50%;
+            border: 2px solid #1a202c;
+        }
+        .timeline-item h3 {
+            font-size: 1.4vw;
+            font-weight: 700;
+            color: #63b3ed;
+        }
+        .timeline-item p {
+            font-size: 1vw;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="presentation-container">
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <h1>이재명 정부 에너지 정책 변화와<br>사업 기회 분석</h1>
+            <h2>에너지 대전환 시대의 새로운 성장 동력</h2>
+        </div>
+
+        <!-- Slide 2: 에너지 정책 패러다임 전환 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>에너지 정책 패러다임 전환</h1>
+                <h2>중앙집중형에서 탈탄소 분산형으로</h2>
+            </div>
+            <div class="slide-content grid-2 items-center">
+                <div class="text-center">
+                    <div class="flex justify-center items-center space-x-4">
+                        <div class="text-center p-4">
+                            <i class="fas fa-industry text-5xl opacity-50"></i>
+                            <p class="mt-2 text-lg">원전·화력<br>(중앙집중형)</p>
+                        </div>
+                        <i class="fas fa-arrow-right-long text-6xl text-blue-400 mx-8"></i>
+                        <div class="text-center p-4">
+                            <i class="fas fa-leaf text-5xl text-green-400"></i>
+                            <p class="mt-2 text-lg">재생에너지·수소<br>(탈탄소 분산형)</p>
+                        </div>
+                    </div>
+                    <p class="mt-8 text-2xl font-bold">에너지 체계의 근본적 전환 가속화</p>
+                </div>
+                <div class="card">
+                     <div class="card-header">
+                        <i class="fas fa-sitemap"></i>
+                        <h3>핵심 정책 방향</h3>
+                    </div>
+                    <ul>
+                        <li><b>"재생에너지 + 그린수소 + 분산전원"</b> 3축 중심 전환</li>
+                        <li><b>기후에너지부 신설</b>: 산업부(에너지) + 환경부(기후) 통합</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: 제도적 기반 구축 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>제도적 기반 구축</h1>
+                <h2>에너지 전환을 위한 법·제도 패키지</h2>
+            </div>
+            <div class="slide-content icon-grid">
+                <div class="icon-item">
+                    <i class="fas fa-gavel"></i>
+                    <p>분산에너지 특별법</p>
+                    <span class="text-sm opacity-70">시행</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-solar-panel"></i>
+                    <p>재생에너지 입찰시장</p>
+                     <span class="text-sm opacity-70">정착</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-water"></i>
+                    <p>해상풍력 특별법</p>
+                     <span class="text-sm opacity-70">2026년 3월 시행</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-road"></i>
+                    <p>에너지 고속도로법</p>
+                     <span class="text-sm opacity-70">패키지 입법</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-bolt"></i>
+                    <p>송전특고선법</p>
+                     <span class="text-sm opacity-70">패키지 입법</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-building"></i>
+                    <p>산업단지 태양광육성법</p>
+                     <span class="text-sm opacity-70">패키지 입법</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 재생에너지 확대 정책 (목표) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>재생에너지 확대 정책</h1>
+                <h2>목표 상향 및 설비 대폭 확충</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-bullseye"></i><h3>2030년 목표 상향</h3></div>
+                    <ul>
+                        <li><b>발전 비중</b>: 21.7% &rarr; <b>30%</b> 상향</li>
+                        <li><b>연간 설치량</b>: 3GW &rarr; <b>10GW</b>로 확대 (5년 내)</li>
+                        <li><b>총 확보량</b>: <b>180 TWh</b> 목표 (전력소비 600TWh 기준)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                     <div class="card-header"><i class="fas fa-chart-line"></i><h3>누적 설비 목표</h3></div>
+                     <ul>
+                        <li><b>태양광·풍력</b>: <b>75 ~ 85 GW</b> 수준으로 확대</li>
+                        <li style="border-bottom: none;">(현재 대비 약 3배 이상 증가)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 재생에너지 확대 정책 (해상풍력 및 PPA) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>재생에너지 확대 정책</h1>
+                <h2>해상풍력 중점 추진과 시장 활성화</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-wind"></i><h3>해상풍력 중점 추진</h3></div>
+                    <ul>
+                        <li><b>2030년까지 20GW 조성</b> (서해안 중심, HVDC 직송)</li>
+                        <li>예비사업 <b>21GW</b> 환경영향평가 진행 중 (신안 8GW 등)</li>
+                        <li>정부 주도 입지 선정 및 인허가 간소화</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-handshake"></i><h3>주민 참여 및 PPA 활성화</h3></div>
+                    <ul>
+                        <li><b>햇빛·바람 연금</b>: 주민 참여형 사업 활성화</li>
+                        <li>개발이익 주민 공유 (신안군 모델)</li>
+                        <li><b>RE100 직접 PPA</b>: 가격구조 재편 (REC 의존&darr;, 장기계약&uarr;)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: 분산에너지 활성화 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>분산에너지 활성화</h1>
+                <h2>안정적 계통 운영을 위한 인프라 구축</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-car-battery"></i><h3>에너지 저장 인프라</h3></div>
+                    <ul>
+                        <li><b>장주기 ESS 10GW급</b> 실증사업 추진</li>
+                        <li>양수, 수전해 연계 저장 확대</li>
+                        <li>재생에너지 전력시장 경매제도 도입</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-network-wired"></i><h3>분산자원 통합관리</h3></div>
+                    <ul>
+                        <li><b>통합발전소(VPP)</b> 통한 계통 안정화</li>
+                        <li>분산전원 통합관리 솔루션 시장 확대</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 7: 그린수소 및 석탄발전 퇴출 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>Clean & Green: 수소와 석탄</h1>
+                <h2>그린수소 생산 본격화 및 석탄발전 조기 퇴출</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-seedling" style="color: #48bb78;"></i><h3>그린수소 생산체계 구축</h3></div>
+                    <ul>
+                        <li><b>단계적 목표</b>: '30년 25만톤 &rarr; '40년 100만톤</li>
+                        <li>재생에너지 연계 수전해 실증 지원 확대</li>
+                        <li><b>참조사례</b>: 제주 행원풍력 (연 80톤 생산)</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-train-subway" style="color: #a0aec0;"></i><h3>석탄발전 조기 퇴출</h3></div>
+                    <ul>
+                        <li><b>폐쇄 시점</b>: 2050년 &rarr; <b>2040년</b>으로 단축</li>
+                        <li><b>석탄 비중</b>: 28% &rarr; <b>0%</b>로 단계적 감축</li>
+                        <li><b>대체 전원</b>: LNG, 원전·가스 혼소, 대규모 BESS 등</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 원자력 및 계통 인프라 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>원자력 재정립과 인프라 확충</h1>
+                <h2>안전 기반 보조전원 및 전국 에너지망 구축</h2>
+            </div>
+            <div class="slide-content grid-2">
+                 <div class="card">
+                    <div class="card-header"><i class="fas fa-atom"></i><h3>원자력 정책 재정립</h3></div>
+                    <ul>
+                        <li><b>현 계획 33기 유지</b> (신규 건설 제한)</li>
+                        <li>안전, 폐기물 처리, SMR R&D 등 <b>질적 성장 중심</b></li>
+                        <li>대형원전 건설 &rarr; <b>운영/서비스 중심</b>으로 전환</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-broadcast-tower"></i><h3>계통 인프라 확충</h3></div>
+                    <ul>
+                        <li><b>서해 HVDC</b> & <b>U자형 한반도 HVDC</b> 프로젝트</li>
+                        <li>재생에너지 수용 위한 계통 증설 가속화</li>
+                        <li><b>AI 데이터센터 확충</b>에 따른 전력 공급 수요 증가</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 사업 기회 분석: 풍력발전 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>사업 기회 ① 풍력발전</h1>
+                <h2>재생에너지 확대의 핵심, 해상풍력 시장 선점</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-lightbulb"></i><h3>정책 기회 요인</h3></div>
+                    <ul>
+                        <li>연 10GW 재생에너지 설치 목표</li>
+                        <li>해상풍력특별법 (인허가 단축)</li>
+                        <li>RE100 & PPA 활성화</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cogs"></i><h3>구체적 사업 기회</h3></div>
+                    <ul>
+                        <li>대형 해상풍력 터빈 공급 (8MW+급)</li>
+                        <li>풍력 EPC 및 단지 운영 사업 진출</li>
+                        <li>대기업 RE100용 단지 EPC 참여</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 10: 사업 기회 분석: 수소에너지 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>사업 기회 ② 수소에너지</h1>
+                <h2>미래 에너지의 중심, 그린수소 생산체계 선도</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-lightbulb"></i><h3>정책 기회 요인</h3></div>
+                    <ul>
+                        <li>그린수소 공급 국가전략 추진</li>
+                        <li>재생에너지 연계 수전해 실증 지원</li>
+                        <li>2030년대 수소발전 수요 본격화</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cogs"></i><h3>구체적 사업 기회</h3></div>
+                    <ul>
+                        <li>재생에너지+수전해 플랜트 사업화</li>
+                        <li>PEM 전해조 등 설비 국산화 및 공급</li>
+                        <li>청정수소 생산 허브 프로젝트 참여</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 11: 사업 기회 분석: LNG 가스터빈 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>사업 기회 ③ LNG 가스터빈</h1>
+                <h2>에너지 전환의 가교, 유연성 전원 확보</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-lightbulb"></i><h3>정책 기회 요인</h3></div>
+                    <ul>
+                        <li>석탄 조기 폐지에 따른 대체 수요</li>
+                        <li>노후 석탄 &rarr; 복합화력 건설 계획</li>
+                        <li>수소혼소 터빈 청정발전 인정 검토</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cogs"></i><h3>구체적 사업 기회</h3></div>
+                    <ul>
+                        <li>국내 신규 LNG발전소 가스터빈 수주</li>
+                        <li>해외 가스터빈 수출 (중동, 아시아)</li>
+                        <li>발전용 터빈 서비스 사업 (부품, 업그레이드)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: 사업 기회 분석: 수소터빈 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>사업 기회 ④ 수소터빈</h1>
+                <h2>수소경제의 게임체인저, 무탄소 발전시장 개척</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-lightbulb"></i><h3>정책 기회 요인</h3></div>
+                    <ul>
+                        <li>2027년 수소터빈 기술 확보 로드맵</li>
+                        <li>2030년대 수소발전 상용화/의무화</li>
+                        <li>글로벌 기술 경쟁 동향</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cogs"></i><h3>구체적 사업 기회</h3></div>
+                    <ul>
+                        <li>세계 최초 400MW급 수소 전소 터빈 개발/실증</li>
+                        <li>한국형 수소터빈 국책실증 사업 주도</li>
+                        <li>완성품 해외 수출 및 혼소 개조시장 진출</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 13: 사업 기회 분석: 원자력 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>사업 기회 ⑤ 원자력발전</h1>
+                <h2>안전 기반 운영 및 신시장 개척</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-lightbulb"></i><h3>정책 기회 요인</h3></div>
+                    <ul>
+                        <li>신규 원전 건설 제한 (현 33기 유지)</li>
+                        <li>노후원전 수명연장 신중 검토</li>
+                        <li>SMR 개발 및 해체산업 부각</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cogs"></i><h3>구체적 사업 기회</h3></div>
+                    <ul>
+                        <li>기존 계획 원전(신한울 3,4호기) 주기기 공급</li>
+                        <li>원전 유지보수(MRO) 시장 참여 확대</li>
+                        <li>국내 SMR 실증사업 파트너 참여</li>
+                        <li>원전 해체 기술/장비 사업 진출 (장기)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: 신기술 개발 기회 (1) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>신기술 개발 기회 (Part 1)</h1>
+                <h2>계통 안정화 및 자원 효율성 극대화</h2>
+            </div>
+            <div class="slide-content grid-3">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-tachometer-alt"></i><h3>Smart GT</h3></div>
+                    <p class="text-sm">비운전 시 발전기+ESS로 계통 관성 제공. 데이터센터용 모듈 패키지화.</p>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-sync-alt"></i><h3>동기조상기</h3></div>
+                    <p class="text-sm">폐지 석탄 발전기 재활용 (CAPEX 절감), 해상변전소 하이브리드 패키지.</p>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-temperature-high"></i><h3>고온 콘크리트 열저장</h3></div>
+                     <p class="text-sm">석탄 보일러 &rarr; 열저장 전환, 산단 폐열 회수 및 피크 저감.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: 신기술 개발 기회 (2) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>신기술 개발 기회 (Part 2)</h1>
+                <h2>미래 에너지 시장 선도 기술</h2>
+            </div>
+            <div class="slide-content grid-2">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-charging-station"></i><h3>차세대 저장/관리 기술</h3></div>
+                     <ul>
+                        <li><b>카르노 배터리 (LDES)</b>: 장주기 시장에서 LCOE 우위 확보</li>
+                        <li><b>AI EMS-VPP 서비스</b>: 분산자원 통합 및 AI 예측/최적화</li>
+                        <li><b>가변속 양수 제어</b>: 재생에너지 변동성 대응 기술</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-cubes"></i><h3>Wind-to-H₂ 통합 패키지</h3></div>
+                    <p class="text-sm leading-relaxed">
+                        풍력터빈, 해수담수화, 전해조, 저장/출하 설비를 하나의 '해양 플랫폼'으로 표준화.
+                        <br><br>
+                        (예: 100MW 풍력 + PEM 전해조 등)
+                        <br><br>
+                        18개월 내 EPC 인도 가능한 모듈화된 솔루션.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: 종합 전략 방향 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>종합 전략 방향</h1>
+                <h2>단계별 성장 로드맵</h2>
+            </div>
+            <div class="slide-content flex items-center justify-center">
+                <div class="w-full">
+                    <div class="timeline-item">
+                        <h3>단기 전략 (1-3년)</h3>
+                        <p>해상풍력 터빈 공급 극대화, LNG 가스터빈 국내 시장 점유율 확대, 수소터빈 실증 완료</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h3>중기 전략 (3-7년)</h3>
+                        <p>재생에너지+수소 통합 솔루션 사업화, VPP 사업 확장, 원전 MRO/SMR 시장 진출</p>
+                    </div>
+                    <div class="timeline-item" style="border-left: 2px solid transparent;">
+                        <h3>장기 전략 (7-10년)</h3>
+                        <p>글로벌 수소터빈 시장 선도, 에너지 전환 종합 솔루션 기업으로 포지셔닝</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: 과제 재검토 방향 -->
+        <div class="slide">
+            <div class="slide-header">
+                <h1>결론: 과제 재검토 방향</h1>
+                <h2>미래 성장을 위한 3대 핵심 전략</h2>
+            </div>
+            <div class="slide-content icon-grid">
+                <div class="icon-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <p class="font-bold text-blue-300">성과 극대화 & 세밀화</p>
+                    <span class="text-sm opacity-80">눈에 보이는 성과를 높이고, 과제를 정책/시장 흐름에 맞게 다듬기</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-layer-group"></i>
+                    <p class="font-bold text-blue-300">통합 플랫폼으로 가치 증대</p>
+                    <span class="text-sm opacity-80">단품 생산을 넘어 개발·운영·서비스를 묶는 통합 솔루션 제공</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-handshake-angle"></i>
+                    <p class="font-bold text-blue-300">차세대 기술 & 파트너십</p>
+                    <span class="text-sm opacity-80">기술 발굴과 개방형 협력으로 5~7년 뒤 성장 시장 선점</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 18: Closing -->
+        <div class="slide title-slide">
+            <h1 class="text-5xl">감사합니다</h1>
+            <h2 class="text-3xl mt-4">Q & A</h2>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button id="prevBtn" class="nav-button"><i class="fas fa-chevron-left"></i></button>
+            <button id="nextBtn" class="nav-button"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="page-number">
+            <span id="currentPage">1</span> / <span id="totalPages">18</span>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentPageElem = document.getElementById('currentPage');
+        const totalPagesElem = document.getElementById('totalPages');
+
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        totalPagesElem.textContent = totalSlides;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            currentPageElem.textContent = index + 1;
+            currentSlide = index;
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        });
+
+        prevBtn.addEventListener('click', () => {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                nextBtn.click();
+            } else if (e.key === 'ArrowLeft') {
+                prevBtn.click();
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
