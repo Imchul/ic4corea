@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에너지 정책 변화와 두산에너빌리티 기회 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Corporate Serenity -->
+    <!-- Application Structure Plan: A single-page application designed with a top-down, exploratory approach. It starts with a high-level summary, followed by a main navigation bar to switch between four key thematic sections: '정책 개요' (Policy Overview), '시장 변화' (Market Impact), '두산의 기회' (Doosan's Opportunity), and '전략 제언' (SWOT & Recommendations). The core of the app is the 'Doosan's Opportunity' section, which features interactive sub-tabs for each business unit (VPP, Nuclear, Wind, etc.), allowing users to dynamically explore specific impacts and opportunities without a linear progression. This structure was chosen to transform the dense report into a digestible, user-driven dashboard experience, facilitating quick understanding and deep dives into areas of interest. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Energy mix projection -> Goal: Show Change -> Viz/Method: Stacked Area Chart (Chart.js) -> Interaction: Hover to see yearly data -> Justification: Effectively visualizes compositional shifts over time.
+    - Report Info: Doosan's business segments -> Goal: Organize & Compare -> Viz/Method: Interactive Tabs (HTML/JS) -> Interaction: Click to switch content view -> Justification: Organizes complex information into clean, focused sections, improving navigation and preventing information overload.
+    - Report Info: SWOT Analysis -> Goal: Organize -> Viz/Method: 4-Quadrant Grid (HTML/Tailwind) -> Interaction: Static Display -> Justification: Uses a standard, universally understood format for strategic analysis.
+    - Report Info: Hydrogen Turbine Roadmap -> Goal: Explain Process -> Viz/Method: Timeline Diagram (HTML/Tailwind) -> Interaction: Static Display -> Justification: Clearly presents sequential development milestones without complex graphics.
+    - Report Info: VPP Concept -> Goal: Explain System -> Viz/Method: Relational Diagram (HTML/Tailwind) -> Interaction: Static Display -> Justification: Illustrates the relationship between system components simply and effectively.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 320px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .tab-active { border-color: #0284c7; color: #0284c7; font-weight: 600; }
+        .tab-inactive { border-color: transparent; color: #4b5563; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .sub-tab-active { background-color: #0369a1; color: white; }
+        .sub-tab-inactive { background-color: #e5e7eb; color: #374151; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center py-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">이재명 정부 에너지 정책과 두산에너빌리티의 기회</h1>
+            <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">
+                '재생에너지, 그린수소, 분산전원'으로의 대전환 속에서 두산에너빌리티의 핵심 사업 영역별 기회를 심층 분석합니다.
+            </p>
+        </header>
+
+        <nav id="main-nav" class="sticky top-0 bg-slate-50/80 backdrop-blur-sm z-10 border-b border-slate-200 mb-8">
+            <div class="flex justify-center items-center space-x-2 md:space-x-8 text-sm md:text-base">
+                <button data-target="policy" class="nav-tab py-4 px-2 md:px-4 border-b-2 tab-active">정책 개요</button>
+                <button data-target="market" class="nav-tab py-4 px-2 md:px-4 border-b-2 tab-inactive">시장 변화</button>
+                <button data-target="opportunity" class="nav-tab py-4 px-2 md:px-4 border-b-2 tab-inactive">두산의 기회</button>
+                <button data-target="strategy" class="nav-tab py-4 px-2 md:px-4 border-b-2 tab-inactive">전략 제언</button>
+            </div>
+        </nav>
+
+        <main id="main-content">
+
+            <section id="policy" class="content-section active fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-slate-900">핵심 정책 방향: 3대 축</h2>
+                    <p class="mt-2 text-slate-600">이재명 정부의 에너지 정책은 재생에너지, 그린수소, 분산형 전원이라는 세 가지 축을 중심으로 에너지 시스템의 근본적인 전환을 목표합니다.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-emerald-500">
+                        <h3 class="text-xl font-bold text-emerald-600">1. 재생에너지 중심 전환</h3>
+                        <p class="mt-3 text-slate-600">2030년까지 재생에너지 발전 비중 30%를 목표로, 연간 최대 10GW 수준의 설비 확충을 추진합니다. '에너지고속도로' 구축과 PPA 제도 확대를 통해 RE100 이행을 지원합니다.</p>
+                        <ul class="mt-4 space-y-2 text-sm">
+                            <li class="flex items-start"><span class="text-emerald-500 font-bold mr-2">▶</span><span>석탄발전 2040년까지 퇴출 목표</span></li>
+                            <li class="flex items-start"><span class="text-emerald-500 font-bold mr-2">▶</span><span>원자력은 안전 기반 보조 전원으로 활용</span></li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-sky-500">
+                        <h3 class="text-xl font-bold text-sky-600">2. 그린수소 경제 구축</h3>
+                        <p class="mt-3 text-slate-600">재생에너지와 연계한 그린수소 생산·공급 체계를 구축하고, 발전·수송·산업 부문에서 수소 활용을 장려하여 새로운 수소 경제 생태계를 조성합니다.</p>
+                         <ul class="mt-4 space-y-2 text-sm">
+                            <li class="flex items-start"><span class="text-sky-500 font-bold mr-2">▶</span><span>수소 혼소/전소 터빈 기술개발 지원</span></li>
+                            <li class="flex items-start"><span class="text-sky-500 font-bold mr-2">▶</span><span>수소 충전 인프라 및 생산단지 확대</span></li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-amber-500">
+                        <h3 class="text-xl font-bold text-amber-600">3. 분산형 전원 시스템</h3>
+                        <p class="mt-3 text-slate-600">중앙집중형 공급체계에서 벗어나, VPP(가상발전소) 등 ICT 기반의 지능형·분산형 에너지 시스템으로 전환합니다. 제주 재생에너지 입찰제도를 전국으로 확대합니다.</p>
+                         <ul class="mt-4 space-y-2 text-sm">
+                            <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">▶</span><span>VPP 시장 제도 정비 및 활성화</span></li>
+                            <li class="flex items-start"><span class="text-amber-500 font-bold mr-2">▶</span><span>대규모 장주기 ESS 도입 및 실증</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="market" class="content-section fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-slate-900">에너지 시장의 지각 변동</h2>
+                    <p class="mt-2 text-slate-600">정책 변화는 발전원 구성과 투자 지형의 급격한 변화를 유도합니다. 재생에너지 설비가 폭발적으로 증가하며, 전력계통 안정성을 위한 기술 시장이 함께 성장할 것입니다.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold text-center mb-4">2038년 발전 설비용량 목표 변화</h3>
+                    <div class="chart-container">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="opportunity" class="content-section fade-in">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900">두산에너빌리티의 5대 사업 기회</h2>
+                    <p class="mt-2 text-slate-600">에너지 대전환은 두산에너빌리티의 핵심 사업 부문에 새로운 성장 기회를 제공합니다. 아래 탭을 클릭하여 각 분야별 기회 요인을 확인하세요.</p>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-2 mb-8">
+                    <div id="opportunity-nav" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <button data-target="opp-vpp" class="opportunity-tab p-3 rounded-md text-sm sm:text-base font-medium sub-tab-active">⚡ VPP</button>
+                        <button data-target="opp-nuclear" class="opportunity-tab p-3 rounded-md text-sm sm:text-base font-medium sub-tab-inactive">⚛️ 원자력</button>
+                        <button data-target="opp-wind" class="opportunity-tab p-3 rounded-md text-sm sm:text-base font-medium sub-tab-inactive">🌬️ 풍력</button>
+                        <button data-target="opp-hydrogen" class="opportunity-tab p-3 rounded-md text-sm sm:text-base font-medium sub-tab-inactive">💧 수소</button>
+                        <button data-target="opp-gasturbine" class="opportunity-tab p-3 rounded-md text-sm sm:text-base font-medium sub-tab-inactive">🔥 가스터빈</button>
+                    </div>
+                </div>
+
+                <div id="opportunity-content">
+                    <div id="opp-vpp" class="opportunity-content-section active fade-in">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">VPP: 제주 경험을 전국으로</h3>
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <p class="text-slate-700 leading-relaxed">제주 VPP 시범사업 경험은 전국 시장 확대 시 강력한 경쟁 우위로 작용할 것입니다. 분산된 에너지 자원을 ICT 기술로 통합·관리하여 전력시장에 참여시키는 VPP는 단순 설비 판매를 넘어 지능형 관리 서비스를 제공하는 고부가가치 사업입니다.</p>
+                                <ul class="mt-4 space-y-2">
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>전략적 플랫폼:</strong> 타 사업(풍력, 수소연료전지)과의 시너지 창출</span></li>
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>데이터 자산:</strong> VPP 운영 데이터는 기술 개발의 귀중한 자산</span></li>
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>시장 선점:</strong> 제주 실증 레퍼런스를 기반으로 전국 VPP 솔루션 사업자로 도약</span></li>
+                                </ul>
+                            </div>
+                            <div class="bg-slate-100 p-6 rounded-lg">
+                                <h4 class="font-bold text-center mb-4">VPP 개념도</h4>
+                                <div class="space-y-4">
+                                    <div class="text-center font-semibold text-sky-700">전력망 (Grid)</div>
+                                    <div class="flex justify-center"><div class="w-px h-6 bg-slate-400"></div></div>
+                                    <div class="text-center p-3 bg-white rounded-lg shadow">
+                                        <p class="font-bold text-lg">가상발전소 (VPP)</p>
+                                        <p class="text-sm text-slate-500">ICT 기반 통합 제어 플랫폼</p>
+                                    </div>
+                                    <div class="flex justify-center"><div class="w-px h-6 bg-slate-400"></div></div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div class="bg-amber-100 p-3 rounded-lg">☀️<p class="text-sm font-medium">태양광</p></div>
+                                        <div class="bg-cyan-100 p-3 rounded-lg">🌬️<p class="text-sm font-medium">풍력</p></div>
+                                        <div class="bg-emerald-100 p-3 rounded-lg">🔋<p class="text-sm font-medium">ESS</p></div>
+                                    </div>
+                                    <p class="text-xs text-center text-slate-500 mt-2">분산에너지자원 (DER)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="opp-nuclear" class="opportunity-content-section fade-in" style="display:none;">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">원자력: SMR 파운드리로 시장 선도</h3>
+                        <p class="text-slate-700 leading-relaxed mb-6">에너지 전환기에도 안정적 기저전원으로서 원자력의 역할은 중요합니다. 특히 소형모듈원자로(SMR) 시장은 장기 성장 잠재력이 매우 큽니다. 두산에너빌리티는 글로벌 SMR 선도 기업들과의 파트너십을 통해 'SMR 파운드리'로서 핵심 기자재 제작 물량을 선점하고 있습니다.</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h4 class="font-bold text-lg">대형 원전</h4>
+                                <p class="text-slate-600 mt-2">국내 신규 건설 및 체코 등 해외 수출을 통한 안정적 사업 지속</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h4 class="font-bold text-lg">소형모듈원자로 (SMR)</h4>
+                                <p class="text-slate-600 mt-2">뉴스케일, 엑스에너지 등과 협력하여 핵심 부품 제조 및 초기 시장 선점</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="opp-wind" class="opportunity-content-section fade-in" style="display:none;">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">풍력: 해상풍력 시장의 핵심 공급자</h3>
+                         <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <p class="text-slate-700 leading-relaxed">정부의 대규모 해상풍력 프로젝트 추진은 고용량 터빈 수요를 폭발적으로 증가시킬 것입니다. 두산에너빌리티는 국제인증을 받은 8MW급 터빈을 기반으로 국내 해상풍력 시장의 핵심 공급자로 자리매김할 절호의 기회를 맞았습니다.</p>
+                                <ul class="mt-4 space-y-2">
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>기술력:</strong> 8MW급 상용화, 10MW급 이상 개발 중</span></li>
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>사업 확장:</strong> 터빈 공급을 넘어 프로젝트 개발, O&M 서비스로 확대</span></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-center mb-4">풍력 설비 목표 (11차 전기본)</h4>
+                                <div class="chart-container" style="height:300px;">
+                                    <canvas id="windChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="opp-hydrogen" class="opportunity-content-section fade-in" style="display:none;">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">수소: 세계 최초 수소터빈 상용화 목표</h3>
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <p class="text-slate-700 leading-relaxed">수소 혼소 및 전소 터빈 개발 분야에서 세계적 경쟁력을 확보하고 있으며, 이는 정부의 그린수소 정책과 완벽히 부합합니다. 수소 생산부터 활용까지 이어지는 가치사슬 전반으로 사업 영역을 확장할 잠재력을 보유하고 있습니다.</p>
+                                <ul class="mt-4 space-y-2">
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>가치사슬 확장:</strong> 그린수소 생산 플랜트 기자재 공급 등</span></li>
+                                    <li class="flex items-center"><span class="text-lg mr-3">✅</span><span><strong>시너지 창출:</strong> 두산퓨얼셀과 협력한 분산형 발전 솔루션</span></li>
+                                </ul>
+                            </div>
+                            <div class="bg-slate-100 p-6 rounded-lg">
+                                <h4 class="font-bold text-center mb-4">수소터빈 개발 로드맵</h4>
+                                <div class="relative pl-8 py-4 border-l-2 border-sky-300 space-y-8">
+                                    <div class="absolute w-4 h-4 bg-sky-500 rounded-full -left-2 top-4"></div>
+                                    <div class="relative">
+                                        <h5 class="font-bold">수소 혼소 터빈</h5>
+                                        <p class="text-sm text-slate-600">향후 5년 내 실증 및 상용화, 개조 사업 수주 기대</p>
+                                    </div>
+                                    <div class="absolute w-4 h-4 bg-sky-500 rounded-full -left-2 top-28"></div>
+                                    <div class="relative">
+                                        <h5 class="font-bold">400MW급 100% 수소 전소 터빈</h5>
+                                        <p class="text-sm text-slate-600">2028년 개발 완료 목표, 세계 최초 상용화 계약 기대</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="opp-gasturbine" class="opportunity-content-section fade-in" style="display:none;">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-800">가스터빈: 에너지 전환의 필수 가교</h3>
+                        <p class="text-slate-700 leading-relaxed mb-6">석탄발전이 퇴출되면서 LNG 가스터빈은 재생에너지의 간헐성을 보완하는 필수적인 유연성 전원으로 부상합니다. 특히 모든 가스터빈을 수소 혼소 가능하도록 개발하여 미래 수소 시대에 대비하는 명확한 기술 로드맵을 제시하고 있습니다.</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-white p-6 rounded-lg shadow text-center">
+                                <h4 class="font-bold text-lg">노후 석탄 대체 수요</h4>
+                                <p class="text-3xl font-bold text-sky-600 mt-2">14.1 GW</p>
+                                <p class="text-slate-500 text-sm">(2036년까지 LNG 전환 계획)</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow text-center">
+                                <h4 class="font-bold text-lg">누적 수주 목표</h4>
+                                <p class="text-3xl font-bold text-sky-600 mt-2">10 조원</p>
+                                <p class="text-slate-500 text-sm">(2028년까지)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="strategy" class="content-section fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-slate-900">SWOT 분석 및 전략적 과제</h2>
+                    <p class="mt-2 text-slate-600">예상되는 정책 환경 하에서 두산에너빌리티의 강점, 약점, 기회, 위협 요인을 분석하고, 기회 극대화를 위한 핵심 과제를 도출합니다.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+                        <h3 class="font-bold text-xl text-green-700">강점 (Strengths)</h3>
+                        <ul class="mt-3 space-y-2 list-disc list-inside text-slate-700">
+                            <li>강력한 발전설비 제조 역량 및 경험</li>
+                            <li>SMR, 수소터빈 등 미래 기술 선도적 R&D</li>
+                            <li>제주 VPP 시범사업 등 신사업 실증 경험</li>
+                        </ul>
+                    </div>
+                    <div class="bg-yellow-50 p-6 rounded-lg border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-xl text-yellow-700">약점 (Weaknesses)</h3>
+                        <ul class="mt-3 space-y-2 list-disc list-inside text-slate-700">
+                            <li>신규 시장에서 글로벌 기업과 치열한 경쟁</li>
+                            <li>대규모 R&D 및 설비 투자 부담</li>
+                            <li>분산형 시스템으로의 조직 문화 전환 필요</li>
+                        </ul>
+                    </div>
+                    <div class="bg-sky-50 p-6 rounded-lg border-l-4 border-sky-500">
+                        <h3 class="font-bold text-xl text-sky-700">기회 (Opportunities)</h3>
+                        <ul class="mt-3 space-y-2 list-disc list-inside text-slate-700">
+                            <li>국내 친환경 에너지 시장의 폭발적 성장</li>
+                            <li>정부의 강력한 정책 지원 및 인센티브</li>
+                            <li>VPP를 통한 통합 에너지 솔루션 사업자로 진화</li>
+                        </ul>
+                    </div>
+                    <div class="bg-red-50 p-6 rounded-lg border-l-4 border-red-500">
+                        <h3 class="font-bold text-xl text-red-700">위협 (Threats)</h3>
+                        <ul class="mt-3 space-y-2 list-disc list-inside text-slate-700">
+                            <li>정권 교체 등 정책의 불확실성</li>
+                            <li>경쟁사의 빠른 기술 발전 및 시장 선점</li>
+                            <li>글로벌 공급망 불안정 및 가격 변동성</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-12 bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="font-bold text-2xl text-center mb-6">사업 기회 극대화를 위한 제언</h3>
+                    <ul class="space-y-4 max-w-2xl mx-auto">
+                        <li class="flex items-start"><span class="text-sky-600 font-bold text-xl mr-3">1</span><div><strong class="text-slate-800">기술 리더십 확보:</strong> 수소터빈, SMR, 대형 풍력터빈 분야에서 기술 격차 확대.</div></li>
+                        <li class="flex items-start"><span class="text-sky-600 font-bold text-xl mr-3">2</span><div><strong class="text-slate-800">신속한 시장 진입:</strong> 개발된 기술의 빠른 상용화 및 양산 체제 구축.</div></li>
+                        <li class="flex items-start"><span class="text-sky-600 font-bold text-xl mr-3">3</span><div><strong class="text-slate-800">전략적 파트너십 강화:</strong> 기술/프로젝트/금융 등 다방면에서 리스크 분담 및 시너지 창출.</div></li>
+                        <li class="flex items-start"><span class="text-sky-600 font-bold text-xl mr-3">4</span><div><strong class="text-slate-800">내재적 경쟁력 구축:</strong> 정책 변화에 흔들리지 않는 가격 경쟁력과 기술적 우위 확보.</div></li>
+                    </ul>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const mainNavTabs = document.querySelectorAll('.nav-tab');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    mainNavTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+
+            mainNavTabs.forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('tab-inactive');
+            });
+            tab.classList.add('tab-active');
+            tab.classList.remove('tab-inactive');
+
+            contentSections.forEach(section => {
+                if (section.id === target) {
+                    section.classList.add('active', 'fade-in');
+                    section.classList.remove('fade-in'); // remove to re-trigger animation
+                    void section.offsetWidth; // trigger reflow
+                    section.classList.add('fade-in');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    const opportunityTabs = document.querySelectorAll('.opportunity-tab');
+    const opportunitySections = document.querySelectorAll('.opportunity-content-section');
+
+    opportunityTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+
+            opportunityTabs.forEach(t => {
+                t.classList.remove('sub-tab-active');
+                t.classList.add('sub-tab-inactive');
+            });
+            tab.classList.add('sub-tab-active');
+            tab.classList.remove('sub-tab-inactive');
+
+            opportunitySections.forEach(section => {
+                if (section.id === target) {
+                    section.style.display = 'block';
+                    section.classList.add('active', 'fade-in');
+                    section.classList.remove('fade-in'); // re-trigger
+                    void section.offsetWidth; // reflow
+                    section.classList.add('fade-in');
+                } else {
+                    section.style.display = 'none';
+                    section.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    const createMarketChart = () => {
+        const ctx = document.getElementById('marketChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['원자력', '석탄/LNG', '신재생', '기타'],
+                datasets: [
+                    {
+                        label: '2022년',
+                        data: [24.7, 43.1, 23.3, 8.9],
+                        backgroundColor: 'rgba(107, 114, 128, 0.6)',
+                        borderColor: 'rgba(107, 114, 128, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '2038년 목표',
+                        data: [15.2, 27.2, 53.0, 4.6],
+                        backgroundColor: 'rgba(2, 132, 199, 0.6)',
+                        borderColor: 'rgba(2, 132, 199, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '발전 설비용량 비중 변화 (%)'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '비중 (%)'
+                        }
+                    }
+                }
+            }
+        });
+    };
+    
+    const createWindChart = () => {
+        const ctx = document.getElementById('windChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['2022년', '2038년 목표'],
+                datasets: [{
+                    label: '풍력 설비용량 (GW)',
+                    data: [1.9, 40.7],
+                    backgroundColor: [
+                        'rgba(107, 114, 128, 0.6)',
+                        'rgba(5, 150, 105, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(107, 114, 128, 1)',
+                        'rgba(5, 150, 105, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '설비용량 (GW)'
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    createMarketChart();
+    createWindChart();
+});
+</script>
+
+</body>
+</html>
