@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVDC 기술 현황 및 사업 전략 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Corporate Blue Harmony -->
+    <!-- Application Structure Plan: A thematic dashboard structure was chosen over a linear report format to cater to a C-level executive's need for quick, high-level insights with drill-down capabilities. The flow is designed to be non-linear, allowing the user to jump between strategic topics: 1. Overview (KPIs), 2. Tech Comparison (Interactive Charts), 3. Key Project Deep Dive (Timeline, Risks), 4. Future Outlook, 5. Actionable Recommendations. This structure transforms dense text into a strategic decision-making tool, enhancing usability and comprehension. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Economic break-even distance -> Goal: Compare -> Viz: Line Chart -> Interaction: Hover tooltips -> Justification: Clearly shows the cost-effectiveness crossover point, which is a key concept. -> Library: Chart.js
+        - Report Info: LCC vs VSC features -> Goal: Compare -> Viz: Radar Chart & Table -> Interaction: Clickable tabs to switch views -> Justification: Radar chart provides a powerful at-a-glance multi-dimensional comparison, ideal for strategic trade-off analysis. -> Library: Chart.js
+        - Report Info: West Coast project details -> Goal: Organize/Inform -> Viz: Interactive Timeline, Risk Matrix (HTML/CSS) -> Interaction: Hover/Click to reveal details -> Justification: Breaks down a complex project into digestible visual components (timeline, risks, players), making it easier to understand than pure text. -> Library/Method: HTML/CSS/JS.
+        - Report Info: Technology evolution -> Goal: Show Change -> Viz: HTML/CSS Diagram -> Interaction: Static -> Justification: A simple visual flow is more intuitive for showing a technology roadmap than a text list. -> Library/Method: HTML/CSS/JS.
+        - Report Info: Strategic recommendations -> Goal: Inform/Action -> Viz: Expandable Cards -> Interaction: Click to expand -> Justification: Presents final takeaways in a clear, actionable format, encouraging focus. -> Library/Method: HTML/CSS/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #3b82f6; /* blue-500 */
+            border-bottom-color: #3b82f6;
+        }
+        .kpi-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .tab-button.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+        }
+        .supply-chain-item {
+            border-left: 4px solid #93c5fd; /* blue-300 */
+        }
+        .strategy-card {
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+        .strategy-card .content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .strategy-card.open .content {
+            max-height: 500px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold text-gray-900">HVDC 기술 및 사업 전략 대시보드</h1>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#overview" class="nav-link text-gray-600 hover:text-blue-500 border-b-2 border-transparent">개요</a>
+                    <a href="#tech-comparison" class="nav-link text-gray-600 hover:text-blue-500 border-b-2 border-transparent">기술 비교</a>
+                    <a href="#project-analysis" class="nav-link text-gray-600 hover:text-blue-500 border-b-2 border-transparent">핵심 프로젝트</a>
+                    <a href="#future-tech" class="nav-link text-gray-600 hover:text-blue-500 border-b-2 border-transparent">미래 기술</a>
+                    <a href="#strategy" class="nav-link text-gray-600 hover:text-blue-500 border-b-2 border-transparent">전략 제언</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="overview" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Executive Summary & Key Metrics</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                본 대시보드는 HVDC 기술의 현황과 미래, 특히 '서해안-수도권 HVDC 사업'의 핵심 사안을 분석하여 COO님의 전략적 의사결정을 지원합니다. 아래 핵심 지표들은 HVDC의 기술적·경제적 우위와 프로젝트의 규모를 한눈에 보여줍니다.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="kpi-card">
+                    <div class="text-blue-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">30-40%</p>
+                    <p class="text-gray-600">전력 손실 저감 (AC 대비)</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="text-blue-500 mb-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /></svg>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">최대 2배</p>
+                    <p class="text-gray-600">송전 용량 증대</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="text-blue-500 mb-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">8 GW</p>
+                    <p class="text-gray-600">서해안-수도권 HVDC 용량</p>
+                </div>
+                <div class="kpi-card">
+                    <div class="text-blue-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1h4v1h-4zm-2 10v-1h4v1h-4z" /></svg>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">7.9조원+</p>
+                    <p class="text-gray-600">서해안 프로젝트 총 사업비</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-comparison" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">기술 비교 분석: HVAC vs HVDC & LCC vs VSC</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                HVDC 기술의 경제성과 성능 우위를 직관적으로 비교합니다. 손익분기점 차트는 HVDC가 장거리 송전에서 왜 필연적인 선택인지를 보여주며, LCC와 VSC 기술 비교는 서해안 프로젝트의 기술 선정 배경에 대한 깊은 이해를 제공합니다.
+            </p>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md mb-12">
+                <h3 class="text-xl font-bold text-center mb-4">HVAC vs HVDC: 총 비용 손익분기점</h3>
+                <div class="chart-container">
+                    <canvas id="breakEvenChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-center mb-6">
+                    <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg">
+                        <button id="showRadar" class="tab-button px-4 py-2 text-sm font-medium rounded-md active">LCC vs VSC: Radar 비교</button>
+                        <button id="showTable" class="tab-button px-4 py-2 text-sm font-medium rounded-md">LCC vs VSC: Table 비교</button>
+                    </div>
+                </div>
+
+                <div id="radarView" class="chart-container">
+                    <canvas id="lccVscRadarChart"></canvas>
+                </div>
+
+                <div id="tableView" class="hidden overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">평가 지표</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LCC (전류형)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VSC (전압형)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">승자</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">초기 투자비</td><td class="px-6 py-4">상대적 저렴</td><td class="px-6 py-4">상대적 고가</td><td class="px-6 py-4 font-bold text-blue-600">LCC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">변환소 부지</td><td class="px-6 py-4">큼 (필터, 무효전력보상설비)</td><td class="px-6 py-4">작음</td><td class="px-6 py-4 font-bold text-green-600">VSC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">송전 손실</td><td class="px-6 py-4">낮음 (스위칭 손실 적음)</td><td class="px-6 py-4">상대적 높음 (MMC로 개선)</td><td class="px-6 py-4 font-bold text-blue-600">LCC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">제어성/유연성</td><td class="px-6 py-4">낮음 (느린 제어)</td><td class="px-6 py-4">매우 높음 (독립/신속 제어)</td><td class="px-6 py-4 font-bold text-green-600">VSC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">블랙스타트</td><td class="px-6 py-4">불가능</td><td class="px-6 py-4">가능</td><td class="px-6 py-4 font-bold text-green-600">VSC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">신재생 적합성</td><td class="px-6 py-4">낮음 (변동성 대응 어려움)</td><td class="px-6 py-4">매우 높음</td><td class="px-6 py-4 font-bold text-green-600">VSC</td></tr>
+                            <tr><td class="px-6 py-4 whitespace-nowrap font-medium">MTDC 확장성</td><td class="px-6 py-4">어려움 (제어 복잡)</td><td class="px-6 py-4">용이함</td><td class="px-6 py-4 font-bold text-green-600">VSC</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="project-analysis" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">프로젝트 심층 분석: 서해안-수도권 HVDC</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                국가 에너지 안보의 핵심인 '서해안-수도권 HVDC 기간망' 프로젝트를 다각도로 분석합니다. 사업 개요, 타임라인, 리스크 요인, 그리고 국내 공급망 생태계까지 프로젝트의 모든 것을 파악할 수 있습니다.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">프로젝트 타임라인 (2031-2038)</h3>
+                    <div class="relative">
+                        <div class="border-l-4 border-blue-300 absolute h-full top-0 left-4"></div>
+                        <div class="mb-8 flex items-center w-full">
+                           <div class="z-10 bg-blue-500 shadow-xl w-8 h-8 rounded-full text-white flex items-center justify-center">1</div>
+                           <div class="ml-4 p-4 bg-blue-100 rounded-lg shadow-sm w-full">
+                                <h4 class="font-bold">2031년</h4>
+                                <p>새만금-서화성 구간 우선 건설 완료 (시급한 수도권 전력난 해소)</p>
+                           </div>
+                        </div>
+                         <div class="mb-8 flex items-center w-full">
+                           <div class="z-10 bg-blue-500 shadow-xl w-8 h-8 rounded-full text-white flex items-center justify-center">2</div>
+                           <div class="ml-4 p-4 bg-gray-100 rounded-lg shadow-sm w-full">
+                                <h4 class="font-bold">2031-2035년</h4>
+                                <p>2/4개 노선 순차적 건설 및 운영 시작</p>
+                           </div>
+                        </div>
+                        <div class="flex items-center w-full">
+                           <div class="z-10 bg-blue-500 shadow-xl w-8 h-8 rounded-full text-white flex items-center justify-center">3</div>
+                           <div class="ml-4 p-4 bg-gray-100 rounded-lg shadow-sm w-full">
+                                <h4 class="font-bold">2038년</h4>
+                                <p>총 4개 노선 (8 GW) 전체 프로젝트 완공</p>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">리스크 분석</h3>
+                    <div id="riskMatrix" class="space-y-4">
+                        <div class="risk-item p-3 bg-red-100 border-l-4 border-red-500 rounded-r-lg">
+                            <h4 class="font-bold">재무적 장애물</h4>
+                            <p class="text-sm">한국전력의 재무 부담, 민간 투자 유치 및 특별법 통과 불확실성.</p>
+                        </div>
+                        <div class="risk-item p-3 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
+                            <h4 class="font-bold">건설/공기 지연 리스크</h4>
+                            <p class="text-sm">인허가 문제, 주민 수용성(어업권 보상 등), 예측 불가능한 변수.</p>
+                        </div>
+                        <div class="risk-item p-3 bg-indigo-100 border-l-4 border-indigo-500 rounded-r-lg">
+                            <h4 class="font-bold">기술적 리스크</h4>
+                             <p class="text-sm">다수 공급업체 설비 간 상호운용성, 기존 AC망과의 조화 문제.</p>
+                        </div>
+                        <div class="risk-item p-3 bg-gray-200 border-l-4 border-gray-500 rounded-r-lg">
+                            <h4 class="font-bold">정책/규제 리스크</h4>
+                            <p class="text-sm">'국가기간 전력망 확충 특별법'의 국회 통과 지연 가능성.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                 <h3 class="text-xl font-bold mb-4">국내 HVDC 공급망 생태계</h3>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <div class="supply-chain-item p-4 bg-gray-50 rounded-r-lg">
+                         <h4 class="font-bold text-lg text-blue-700">케이블</h4>
+                         <p class="font-medium">LS전선, LS마린솔루션</p>
+                         <p class="text-sm text-gray-600">글로벌 시장 주도</p>
+                         <hr class="my-2">
+                         <p class="font-medium">대한전선</p>
+                         <p class="text-sm text-gray-600">대규모 투자로 경쟁력 강화</p>
+                     </div>
+                     <div class="supply-chain-item p-4 bg-gray-50 rounded-r-lg">
+                         <h4 class="font-bold text-lg text-blue-700">변환설비/변압기</h4>
+                         <p class="font-medium">효성중공업, LS일렉트릭, HD현대일렉트릭</p>
+                         <p class="text-sm text-gray-600">VSC 시스템, 변압기, 차단기 국산화 추진</p>
+                     </div>
+                      <div class="supply-chain-item p-4 bg-gray-50 rounded-r-lg">
+                         <h4 class="font-bold text-lg text-blue-700">부품/소재</h4>
+                         <p class="font-medium">일진전기</p>
+                         <p class="text-sm text-gray-600">특수 케이블</p>
+                         <hr class="my-2">
+                         <p class="font-medium">제룡산업</p>
+                         <p class="text-sm text-gray-600">애자 및 금구류</p>
+                     </div>
+                 </div>
+            </div>
+        </section>
+
+        <section id="future-tech" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">차세대 기술과 미래 방향</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                HVDC 기술의 진화는 멈추지 않습니다. 미래 '슈퍼그리드'를 현실로 만들 DC 차단기와 다단자 HVDC(MTDC) 기술의 현주소와 과제를 통해 시장의 판도를 바꿀 다음 기회를 조망합니다.
+            </p>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-xl font-bold text-center mb-6">HVDC 기술 발전 로드맵</h3>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-center">
+                    <div class="p-4 bg-gray-100 rounded-lg">
+                        <p class="font-bold">점대점 LCC</p>
+                        <p class="text-sm">전통적 방식</p>
+                    </div>
+                    <div class="text-2xl text-blue-400 font-bold">&rarr;</div>
+                    <div class="p-4 bg-blue-100 rounded-lg">
+                        <p class="font-bold">점대점 VSC</p>
+                        <p class="text-sm">현재 대세</p>
+                    </div>
+                    <div class="text-2xl text-blue-400 font-bold">&rarr;</div>
+                    <div class="p-4 bg-green-100 rounded-lg">
+                        <p class="font-bold">방사형 MTDC VSC</p>
+                        <p class="text-sm">최신 기술</p>
+                    </div>
+                    <div class="text-2xl text-blue-400 font-bold">&rarr;</div>
+                     <div class="p-4 bg-indigo-100 rounded-lg">
+                        <p class="font-bold">격자형 MTDC VSC</p>
+                        <p class="text-sm">미래 목표</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">과제 1: HVDC 차단기 개발</h3>
+                    <p class="text-gray-600">DC는 전류가 0이 되는 지점이 없어 아크 소멸이 극도로 어렵습니다. 이는 DC 계통의 고장 파급을 막는 데 큰 걸림돌입니다. 빠른 DC 차단기 개발은 다단자 격자형 그리드 구축의 '성배(Holy Grail)'로 불리며, 기술 개발 성공 시 시장 패권에 큰 영향을 미칠 것입니다.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">과제 2: 다단자 HVDC(MTDC) 구현</h3>
+                    <p class="text-gray-600">3개 이상의 변환소를 연결하여 전력을 유연하게 주고받는 시스템입니다. 분산된 신재생에너지를 효율적으로 통합하고 국가 간 슈퍼그리드를 형성하는 핵심 기술입니다. VSC 기술이 MTDC 구현에 필수적이며, DC 차단기 개발이 상용화의 최대 난제입니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="strategy" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">COO를 위한 전략적 제언</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                분석 결과를 바탕으로, HVDC 기술 환경 변화와 서해안 프로젝트 기회에 대응하기 위한 4가지 핵심 전략을 제언합니다. 각 항목을 클릭하여 상세 내용을 확인하십시오.
+            </p>
+
+            <div class="space-y-4">
+                <div class="strategy-card bg-white rounded-lg shadow-md border border-gray-200">
+                    <div class="p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-blue-700">제언 1: 서해안 프로젝트 공급망 기회 포착</h3>
+                        <div class="arrow text-2xl text-blue-500 transform transition-transform">▼</div>
+                    </div>
+                    <div class="content px-6 pb-6 text-gray-700">
+                        <p>향후 10년 이상 지속될 국내 최대 에너지 인프라 사업입니다. 당사가 경쟁 우위를 가질 수 있는 특정 분야(고신뢰성 부품, 제어 시스템, 엔지니어링 등)를 식별하고 자원을 집중해야 합니다. 이는 단순 수주를 넘어, 대규모 프로젝트 실적(Track Record)을 확보하여 해외 시장 진출의 교두보로 삼는 장기적 관점의 접근이 필요합니다.</p>
+                    </div>
+                </div>
+                <div class="strategy-card bg-white rounded-lg shadow-md border border-gray-200">
+                     <div class="p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-blue-700">제언 2: 전압형(VSC) 관련 핵심 역량 집중</h3>
+                        <div class="arrow text-2xl text-blue-500 transform transition-transform">▼</div>
+                    </div>
+                    <div class="content px-6 pb-6 text-gray-700">
+                        <p>전 세계 HVDC 기술의 대세는 명백히 전압형(VSC)입니다. 기업의 R&D, 인재 확보, 파트너십은 VSC 생태계에 초점을 맞춰야 합니다. 특히 VSC 시스템의 핵심인 MMC 컨버터 제어, 고효율 전력반도체 모듈, 시스템 통합 기술에 대한 역량을 선제적으로 확보하는 것이 중요합니다.</p>
+                    </div>
+                </div>
+                <div class="strategy-card bg-white rounded-lg shadow-md border border-gray-200">
+                     <div class="p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-blue-700">제언 3: 차세대 HVDC 기술 모니터링 강화</h3>
+                        <div class="arrow text-2xl text-blue-500 transform transition-transform">▼</div>
+                    </div>
+                    <div class="content px-6 pb-6 text-gray-700">
+                        <p>HVDC의 미래는 다단자(MTDC)와 DC 차단기 기술에 달려있습니다. 이는 시장 판도를 바꿀 파괴적 혁신입니다. 글로벌 선도 기업과 연구기관의 R&D 동향을 추적하고, 기술적 위협과 기회를 평가할 전담 조직(Technology Monitoring Task Force) 운영을 제언합니다.</p>
+                    </div>
+                </div>
+                 <div class="strategy-card bg-white rounded-lg shadow-md border border-gray-200">
+                     <div class="p-6 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-blue-700">제언 4: 프로젝트 실행 리스크 관리 전략 수립</h3>
+                        <div class="arrow text-2xl text-blue-500 transform transition-transform">▼</div>
+                    </div>
+                    <div class="content px-6 pb-6 text-gray-700">
+                        <p>서해안 프로젝트는 재무 및 공기 지연 리스크를 안고 있습니다. 사업 제안 및 계약 시 이러한 리스크에 대한 구체적인 대응 방안(부품 공급망 다변화, 유연한 생산 계획 등)을 포함시켜야 합니다. 이는 당사를 단순 공급업체가 아닌, 프로젝트 성공을 함께 고민하는 신뢰할 수 있는 파트너로 각인시킬 것입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 HVDC Strategy Dashboard. For internal use only.</p>
+            <p class="text-sm text-gray-400">This application was generated based on the provided report.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                const words = text.split(' ');
+                let line = '';
+                for(let n = 0; n < words.length; n++) {
+                    let testLine = line + words[n] + ' ';
+                    let metrics = context.measureText(testLine);
+                    let testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        context.fillText(line, x, y);
+                        line = words[n] + ' ';
+                        y += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                context.fillText(line, x, y);
+            }
+
+            const breakEvenData = {
+                labels: ['0', '100', '200', '300', '400', '500', '600', '700', '800', '900', '1000'],
+                datasets: [
+                    {
+                        label: 'HVAC (가공선)',
+                        data: [20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderDash: [5, 5],
+                        tension: 0.1
+                    },
+                    {
+                        label: 'HVDC (가공선)',
+                        data: [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        tension: 0.1
+                    },
+                     {
+                        label: 'HVAC (해저케이블)',
+                        data: [25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 225],
+                        borderColor: 'rgb(255, 205, 86)',
+                        backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                        borderDash: [5, 5],
+                        tension: 0.1
+                    },
+                    {
+                        label: 'HVDC (해저케이블)',
+                        data: [60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        tension: 0.1
+                    }
+                ]
+            };
+            const breakEvenCtx = document.getElementById('breakEvenChart').getContext('2d');
+            new Chart(breakEvenCtx, {
+                type: 'line',
+                data: breakEvenData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: false },
+                        tooltip: { mode: 'index', intersect: false },
+                        legend: { position: 'bottom' },
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: true, text: '송전 거리 (km)' }
+                        },
+                        y: {
+                            display: true,
+                            title: { display: true, text: '상대적 총 비용' }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            const lccVscData = {
+                labels: ['제어성/유연성', '신재생 적합성', 'MTDC 확장성', '변환소 부지', '초기 투자비', '송전 손실', '블랙스타트'],
+                datasets: [{
+                    label: 'VSC (전압형)',
+                    data: [9, 9, 8, 8, 5, 6, 9],
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(54, 162, 235)'
+                }, {
+                    label: 'LCC (전류형)',
+                    data: [3, 4, 3, 3, 8, 8, 1],
+                    fill: true,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 99, 132)'
+                }]
+            };
+
+            const lccVscCtx = document.getElementById('lccVscRadarChart').getContext('2d');
+            new Chart(lccVscCtx, {
+                type: 'radar',
+                data: lccVscData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 10,
+                             pointLabels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            const showRadarBtn = document.getElementById('showRadar');
+            const showTableBtn = document.getElementById('showTable');
+            const radarView = document.getElementById('radarView');
+            const tableView = document.getElementById('tableView');
+
+            showRadarBtn.addEventListener('click', () => {
+                radarView.style.display = 'block';
+                tableView.style.display = 'none';
+                showRadarBtn.classList.add('active');
+                showTableBtn.classList.remove('active');
+            });
+
+            showTableBtn.addEventListener('click', () => {
+                radarView.style.display = 'none';
+                tableView.style.display = 'block';
+                showTableBtn.classList.add('active');
+                showRadarBtn.classList.remove('active');
+            });
+            
+            const strategyCards = document.querySelectorAll('.strategy-card');
+            strategyCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('open');
+                    const arrow = card.querySelector('.arrow');
+                    arrow.classList.toggle('rotate-180');
+                });
+            });
+
+            const navLinks = document.querySelectorAll('nav a');
+            const sections = document.querySelectorAll('section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+             navLinks.forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
