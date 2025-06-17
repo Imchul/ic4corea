@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HVDC 기술 현황 및 전략 인포그래픽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Energetic Blue & Teal -->
+    <!-- Application Structure Plan: A top-down narrative structure was chosen for this infographic to guide the user from high-level strategic importance to specific project details and future outlook. The flow is: 1. Title & Hook (Why HVDC matters now). 2. Core Advantages (Visual comparison of HVAC vs. HVDC KPIs). 3. Technology Deep Dive (LCC vs. VSC comparison via an interactive chart). 4. Project Spotlight (Focus on the West Coast project with a timeline and risk matrix). 5. Future & Strategy (Next-gen tech and actionable recommendations). This linear storytelling approach is ideal for an infographic, ensuring the complex report is digestible and persuasive. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Core HVDC advantages (loss reduction, footprint) -> Goal: Inform -> Viz: Large number stats with icons -> Justification: High-impact way to present key performance indicators. -> Library/Method: HTML/CSS with Unicode icons.
+        - Report Info: HVAC vs. HVDC cost analysis -> Goal: Compare/Change -> Viz: Line Chart (Break-even distance) -> Justification: The most effective way to visualize the core economic argument for HVDC over distance. -> Library/Method: Chart.js
+        - Report Info: LCC vs. VSC technical features -> Goal: Compare -> Viz: Radar Chart -> Justification: A radar chart is superior for comparing multiple attributes of two subjects simultaneously, providing a quick visual summary of strengths and weaknesses. -> Library/Method: Chart.js
+        - Report Info: West Coast Project Timeline -> Goal: Change/Organize -> Viz: Vertical timeline diagram -> Justification: Chronological data is best presented in a timeline format for easy comprehension of the project schedule. -> Library/Method: HTML/CSS/Tailwind.
+        - Report Info: Project Risks -> Goal: Organize/Inform -> Viz: Styled cards in a grid -> Justification: Visually separates and categorizes different risk factors for clarity. -> Library/Method: HTML/CSS/Tailwind.
+        - Report Info: Strategic Recommendations -> Goal: Inform/Organize -> Viz: Numbered list with icons in cards -> Justification: Presents final takeaways in a clear, actionable, and visually appealing format. -> Library/Method: HTML/CSS/Tailwind. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #F9FAFB; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .hero-gradient { background: linear-gradient(135deg, #007BFF 0%, #14B8A6 100%); }
+        .stat-card { background: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); padding: 2rem; text-align: center; transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .section-title { font-weight: 900; font-size: 2.25rem; line-height: 2.5rem; color: #0B2D4F; }
+        .section-subtitle { font-size: 1.125rem; line-height: 1.75rem; color: #4B5563; margin-top: 1rem; max-width: 48rem; margin-left: auto; margin-right: auto;}
+    </style>
+</head>
+<body class="text-gray-700 antialiased">
+
+    <!-- Hero Section -->
+    <header class="hero-gradient text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight">미래 전력망의 심장, HVDC</h1>
+            <p class="mt-4 text-xl md:text-2xl max-w-3xl mx-auto opacity-90">에너지 전환 시대, 왜 초고압직류송전(HVDC)이 선택이 아닌 필수가 되었는가?</p>
+        </div>
+    </header>
+
+    <main class="py-16">
+
+        <!-- Section 1: Core Advantages -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24 text-center">
+            <h2 class="section-title">HVDC: 더 효율적이고, 더 강력하게</h2>
+            <p class="section-subtitle">기존 교류(AC) 송전의 한계를 넘어, HVDC는 전력망의 패러다임을 바꾸는 명백한 기술적 우위를 제공합니다.</p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="stat-card">
+                    <span class="text-5xl" role="img" aria-label="low power loss">📉</span>
+                    <h3 class="mt-4 text-2xl font-bold text-gray-900">30-40% 전력 손실 저감</h3>
+                    <p class="mt-2 text-gray-600">AC 대비 월등한 효율로 생산된 에너지를 더 멀리, 더 많이 보냅니다. 이는 장기적인 운영 수익성 개선으로 이어집니다.</p>
+                </div>
+                <div class="stat-card">
+                    <span class="text-5xl" role="img" aria-label="high capacity">⚡️</span>
+                    <h3 class="mt-4 text-2xl font-bold text-gray-900">최대 2배 송전 용량</h3>
+                    <p class="mt-2 text-gray-600">동일한 크기의 전선으로 더 많은 전력을 전송하여, 국토 이용 효율을 극대화하고 사회적 수용성을 높입니다.</p>
+                </div>
+                <div class="stat-card">
+                    <span class="text-5xl" role="img" aria-label="no distance limit">🌐</span>
+                    <h3 class="mt-4 text-2xl font-bold text-gray-900">무제한의 송전 거리</h3>
+                    <p class="mt-2 text-gray-600">국가 간 대륙을 잇는 '슈퍼그리드'와 원격 해상풍력단지 연계를 가능하게 하는 유일한 실용적 기술입니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Break-Even Analysis -->
+        <section class="bg-white py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="section-title">경제성의 전환점: HVDC는 언제 더 유리한가?</h2>
+                <p class="section-subtitle">초기 투자비가 높음에도 불구하고, 특정 거리를 넘어서면 HVDC의 총 비용이 HVAC보다 저렴해집니다. 아래 차트는 '손익분기 거리'를 보여주며, 특히 해저 케이블에서 HVDC의 경제적 당위성을 증명합니다.</p>
+                <div class="mt-12 chart-container">
+                    <canvas id="breakEvenChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: LCC vs VSC -->
+        <section class="py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="section-title">기술의 진화: 전류형(LCC) vs 전압형(VSC)</h2>
+                <p class="section-subtitle">HVDC 기술은 전통적인 LCC에서 현대적인 VSC로 발전했습니다. VSC는 초기 비용이 높지만, 제어 유연성과 신재생에너지 수용성에서 압도적인 장점을 가져 미래 전력망의 핵심으로 자리 잡고 있습니다.</p>
+                <div class="mt-12 chart-container">
+                    <canvas id="lccVscRadarChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section 4: Project Spotlight -->
+        <section class="bg-white py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="section-title">프로젝트 심층분석: 서해안-수도권 HVDC 기간망</h2>
+                    <p class="section-subtitle">국가 에너지 안보와 미래 산업의 명운을 건 총 사업비 7.9조 원 이상의 메가 프로젝트. 호남의 잉여 전력을 수도권 첨단 산업단지로 보내는 대한민국 전력망의 대동맥입니다.</p>
+                </div>
+
+                <div class="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <!-- Project Timeline -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center lg:text-left">프로젝트 추진 로드맵</h3>
+                        <div class="relative pl-6">
+                            <div class="absolute left-0 top-0 h-full w-1 bg-blue-200 rounded"></div>
+                            <div class="relative mb-8">
+                                <div class="absolute -left-9 top-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                                <div class="ml-4 p-4 bg-blue-50 rounded-lg">
+                                    <p class="font-bold text-blue-800">2031년: 1단계 완공</p>
+                                    <p>새만금-서화성 구간 우선 건설 완료. 시급한 수도권 전력난 해소.</p>
+                                </div>
+                            </div>
+                            <div class="relative mb-8">
+                                <div class="absolute -left-9 top-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                                <div class="ml-4 p-4 bg-blue-50 rounded-lg">
+                                    <p class="font-bold text-blue-800">2031-2035년: 순차적 확장</p>
+                                    <p>총 4개 노선 중 2개 노선 건설 및 운영 시작. 공급 안정성 강화.</p>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -left-9 top-1 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                                <div class="ml-4 p-4 bg-blue-50 rounded-lg">
+                                    <p class="font-bold text-blue-800">2038년: 프로젝트 완성</p>
+                                    <p>총 8GW 용량의 4개 노선 전체 완공. 국가 전력망의 종축 완성.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Key Risks -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center lg:text-left">핵심 장애물과 과제</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+                                <span class="text-2xl mr-4">💰</span>
+                                <div>
+                                    <h4 class="font-bold text-red-800">재무적 리스크</h4>
+                                    <p>한국전력의 재무 부담과 민간 투자 유치 및 특별법 통과의 불확실성.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+                                <span class="text-2xl mr-4">🚧</span>
+                                <div>
+                                    <h4 class="font-bold text-yellow-800">공기 지연 리스크</h4>
+                                    <p>인허가 문제, 주민 수용성(어업권 보상 등), 예측 불가능한 변수.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
+                                 <span class="text-2xl mr-4">⚙️</span>
+                                <div>
+                                    <h4 class="font-bold text-indigo-800">기술적 리스크</h4>
+                                    <p>다수 공급사 설비 간 상호운용성 확보 및 기존 AC망과의 조화 문제.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Strategy & Conclusion -->
+        <section class="py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="section-title">미래를 위한 전략적 제언</h2>
+                <p class="section-subtitle">이 거대한 변화의 흐름 속에서, 기업의 장기적 성장을 담보할 네 가지 핵심 전략을 제언합니다.</p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="p-6 bg-white rounded-lg shadow-md border-t-4 border-teal-400">
+                        <h3 class="font-bold text-lg text-gray-900">1. 공급망 기회 포착</h3>
+                        <p class="mt-2 text-sm">특화 분야(부품, 제어, 엔지니어링)를 식별하고 자원을 집중하여, 해외 시장 진출의 교두보를 마련해야 합니다.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-lg shadow-md border-t-4 border-teal-400">
+                        <h3 class="font-bold text-lg text-gray-900">2. VSC 역량 집중</h3>
+                        <p class="mt-2 text-sm">전 세계적 대세인 VSC 기술, 특히 MMC 컨버터 제어, 전력반도체 역량을 선제적으로 확보해야 합니다.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-lg shadow-md border-t-4 border-teal-400">
+                        <h3 class="font-bold text-lg text-gray-900">3. 차세대 기술 모니터링</h3>
+                        <p class="mt-2 text-sm">DC 차단기, MTDC 등 미래 시장의 판도를 바꿀 기술 동향을 추적할 전담 조직이 필요합니다.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-lg shadow-md border-t-4 border-teal-400">
+                        <h3 class="font-bold text-lg text-gray-900">4. 리스크 관리 전략</h3>
+                        <p class="mt-2 text-sm">프로젝트의 재무, 공기 지연 리스크에 대한 구체적 대응 방안을 제시하여 신뢰할 수 있는 파트너가 되어야 합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>본 인포그래픽은 제공된 보고서에 기반하여 제작되었습니다.</p>
+            <p class="text-sm text-gray-400 mt-2">For internal strategic review only.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const processLabel = (label) => {
+                if (label.length <= 16) return label;
+                const words = label.split(' ');
+                let currentLine = '';
+                const lines = [];
+                for (const word of words) {
+                    if ((currentLine + ' ' + word).trim().length > 16) {
+                        lines.push(currentLine.trim());
+                        currentLine = word;
+                    } else {
+                        currentLine = (currentLine + ' ' + word).trim();
+                    }
+                }
+                if (currentLine) lines.push(currentLine.trim());
+                return lines;
+            };
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                }
+                return label;
+            };
+
+            const commonTooltipOptions = {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback
+                        }
+                    }
+                }
+            };
+            
+            const breakEvenCtx = document.getElementById('breakEvenChart').getContext('2d');
+            new Chart(breakEvenCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0', '200', '400', '600', '800', '1000'],
+                    datasets: [
+                        { label: 'HVAC (가공선)', data: [20, 36, 52, 68, 84, 100], borderColor: '#F87171', backgroundColor: '#F87171', tension: 0.1, borderDash: [5, 5] },
+                        { label: 'HVDC (가공선)', data: [50, 60, 70, 80, 90, 100], borderColor: '#60A5FA', backgroundColor: '#60A5FA', tension: 0.1 },
+                        { label: 'HVAC (해저케이블)', data: [25, 65, 105, 145, 185, 225], borderColor: '#FBBF24', backgroundColor: '#FBBF24', tension: 0.1, borderDash: [5, 5] },
+                        { label: 'HVDC (해저케이블)', data: [60, 64, 68, 72, 76, 80], borderColor: '#34D399', backgroundColor: '#34D399', tension: 0.1 }
+                    ]
+                },
+                options: { ...commonTooltipOptions, responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: '송전 거리 (km)' } }, y: { title: { display: true, text: '상대적 총 비용' } } }, plugins: { ...commonTooltipOptions.plugins, legend: { position: 'bottom' } } }
+            });
+
+            const lccVscRadarCtx = document.getElementById('lccVscRadarChart').getContext('2d');
+            new Chart(lccVscRadarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['제어성/유연성', '신재생 적합성', 'MTDC 확장성', '변환소 부지', '초기 투자비', '송전 손실', '블랙스타트 기능'],
+                    datasets: [
+                        { label: 'VSC (전압형)', data: [9, 9, 8, 8, 5, 6, 9], fill: true, backgroundColor: 'rgba(52, 211, 153, 0.2)', borderColor: 'rgb(52, 211, 153)', pointBackgroundColor: 'rgb(52, 211, 153)'},
+                        { label: 'LCC (전류형)', data: [3, 4, 3, 3, 8, 8, 1], fill: true, backgroundColor: 'rgba(96, 165, 250, 0.2)', borderColor: 'rgb(96, 165, 250)', pointBackgroundColor: 'rgb(96, 165, 250)'}
+                    ]
+                },
+                options: { ...commonTooltipOptions, responsive: true, maintainAspectRatio: false, scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { font: { size: 13 } } } }, plugins: { ...commonTooltipOptions.plugins, legend: { position: 'bottom' } } }
+            });
+        });
+    </script>
+</body>
+</html>
