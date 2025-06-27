@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panthalassa: 전략적 투자(SI) 검토 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Oceanic Neutrals -->
+    <!-- Application Structure Plan: 이 SPA는 보고서의 직접적인 복제가 아닌, 투자자를 위한 요약 보고서 형식으로 설계되었습니다. 최종 권고를 서두에 제시하고, 핵심 요약 대시보드(투자 개요/SWOT)를 통해 전체 그림을 빠르게 파악하게 합니다. 이후 사용자는 '기술', '시장', '리스크', '팀' 등 근거가 되는 세부 정보로 드릴다운할 수 있습니다. 이 구조는 신속한 기회 평가 후 세부 검증을 원하는 투자자의 사고 흐름에 부합합니다. 상단 고정 탐색 메뉴를 통해 비선형적 탐색도 지원됩니다. -->
+    <!-- Visualization & Content Choices: 
+        - 투자 논지 -> 목표: 정보 제공 -> 표현: 핵심 지표 카드, SWOT 그리드(HTML/CSS) -> 상호작용: 정적 -> 정당성: 빠른 의사결정을 위한 고수준 요약 제공.
+        - 기술 프로세스 -> 목표: 정리/정보 제공 -> 표현: HTML/CSS 프로세스 다이어그램, JS 기반 탭 -> 상호작용: 탭 클릭 -> 정당성: 복잡한 시스템을 단순화하고 두 핵심 사업을 명확히 구분.
+        - 시장 전망 -> 목표: 비교/변화 -> 표현: Chart.js 막대 차트 -> 상호작용: 툴팁 호버 -> 정당성: 3개 융합 시장의 규모와 성장을 시각적으로 강조. 표보다 효과적.
+        - 리스크 매트릭스 -> 목표: 정리 -> 표현: 확장형 HTML/CSS 그리드 -> 상호작용: 클릭으로 확장/축소 -> 정당성: 정보 밀도를 관리하여 사용자가 압도되지 않고 각 리스크에 집중하도록 함.
+        - 최종 권고 -> 목표: 정보 제공 -> 표현: 대화형 HTML/CSS 체크리스트 -> 상호작용: 클릭 가능 항목 -> 정당성: 보고서의 최종 질문을 투자자를 위한 실행 가능한 할 일 목록으로 변환. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #0369a1; /* sky-700 */
+            border-bottom-color: #0369a1; /* sky-700 */
+        }
+        .section-title {
+            color: #0f766e; /* teal-700 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-sky-700">Panthalassa</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium">투자 개요</a>
+                        <a href="#tech" class="nav-link px-3 py-2 rounded-md text-sm font-medium">기술 및 비즈니스</a>
+                        <a href="#market" class="nav-link px-3 py-2 rounded-md text-sm font-medium">시장 잠재력</a>
+                        <a href="#competition" class="nav-link px-3 py-2 rounded-md text-sm font-medium">경쟁 환경</a>
+                        <a href="#risk" class="nav-link px-3 py-2 rounded-md text-sm font-medium">리스크 평가</a>
+                        <a href="#team" class="nav-link px-3 py-2 rounded-md text-sm font-medium">팀 및 투자자</a>
+                        <a href="#recommendation" class="nav-link px-3 py-2 rounded-md text-sm font-medium">최종 권고</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-sky-700 hover:bg-slate-100 focus:outline-none">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#overview" class="nav-link block px-3 py-2 rounded-md text-base font-medium">투자 개요</a>
+                <a href="#tech" class="nav-link block px-3 py-2 rounded-md text-base font-medium">기술 및 비즈니스</a>
+                <a href="#market" class="nav-link block px-3 py-2 rounded-md text-base font-medium">시장 잠재력</a>
+                <a href="#competition" class="nav-link block px-3 py-2 rounded-md text-base font-medium">경쟁 환경</a>
+                <a href="#risk" class="nav-link block px-3 py-2 rounded-md text-base font-medium">리스크 평가</a>
+                <a href="#team" class="nav-link block px-3 py-2 rounded-md text-base font-medium">팀 및 투자자</a>
+                <a href="#recommendation" class="nav-link block px-3 py-2 rounded-md text-base font-medium">최종 권고</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">프로젝트 판탈라사</h1>
+            <p class="mt-4 text-xl md:text-2xl text-slate-600">"에너지는 바다에 머문다" - 해양 기반 에너지의 새로운 패러다임</p>
+            <div class="mt-8 inline-block bg-teal-100 text-teal-800 font-bold py-3 px-6 rounded-full shadow-lg">
+                최종 투자 권고: 조건부 심층 실사 진행
+            </div>
+        </section>
+
+        <!-- Investment Overview -->
+        <section id="overview" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">1. 투자 개요</h2>
+            <p class="mb-8 text-lg text-slate-600">Panthalassa의 투자 매력도를 핵심 요소별로 요약했습니다. 강점, 약점, 기회, 위협 요인을 통해 균형 잡힌 시각을 제공합니다.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="card p-6 text-center">
+                    <h3 class="font-bold text-lg text-sky-700">가치 제안</h3>
+                    <p class="mt-2 text-2xl font-bold">$0.02/kWh</p>
+                    <p class="text-sm text-slate-500">세계 최저가 그린 전자 생산 목표 (검증 필요)</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <h3 class="font-bold text-lg text-sky-700">누적 투자 유치액</h3>
+                    <p class="mt-2 text-2xl font-bold">$7,810만+</p>
+                    <p class="text-sm text-slate-500">2024년 기준</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <h3 class="font-bold text-lg text-sky-700">주요 투자자</h3>
+                    <p class="mt-2 text-lg font-semibold">Founders Fund, Lowercarbon Capital</p>
+                    <p class="text-sm text-slate-500">최상급 딥테크 VC 신뢰 확보</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <h3 class="font-bold text-lg text-sky-700">팀 배경</h3>
+                    <p class="mt-2 text-lg font-semibold">SpaceX, Google, NASA</p>
+                    <p class="text-sm text-slate-500">세계 최고 수준의 엘리트 엔지니어</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="font-bold text-xl mb-4 text-center">투자 논지 요약</h3>
+                    <p>Panthalassa는 파력 에너지, 그린수소, 해상 컴퓨팅이라는 3개 고성장 시장의 교차점에서 독창적인 비즈니스 모델을 제시합니다. 해상 신재생에너지의 최대 난제였던 '육상 전력망 연계' 문제를 원천적으로 회피함으로써, '에너지는 바다에 머문다'는 혁신을 통해 새로운 산업 플랫폼을 구축합니다. 이는 고위험-고수익 특성을 지닌 매력적인 전략적 투자 기회입니다.</p>
+                </div>
+                 <div class="card p-6">
+                    <h3 class="font-bold text-xl mb-4 text-center">SWOT 분석</h3>
+                    <div class="space-y-3">
+                        <p><strong class="text-green-600">Strength:</strong> 혁신적 비즈니스 모델 (그리드 탈피), 세계적 수준의 팀과 투자자.</p>
+                        <p><strong class="text-red-600">Weakness:</strong> 공격적 비용 목표($0.02/kWh)에 대한 검증 부족, 기술의 장기 신뢰성 미입증.</p>
+                        <p><strong class="text-blue-600">Opportunity:</strong> 해운 탈탄소화 및 AI 붐으로 인한 그린수소/컴퓨팅 수요 폭증.</p>
+                        <p><strong class="text-orange-600">Threat:</strong> 경쟁 기술의 발전, 해양 규제 및 인허가 리스크.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technology & Business Model -->
+        <section id="tech" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">2. 핵심 기술 및 비즈니스 모델</h2>
+            <p class="mb-8 text-lg text-slate-600">Panthalassa의 자율 에너지 '노드'가 어떻게 파도에서 가치를 창출하는지 시각적으로 설명합니다. 회사의 핵심 비즈니스인 그린수소 생산과 해상 컴퓨팅에 대해 알아보세요.</p>
+            
+            <div class="card p-6 md:p-8 mb-8">
+                <h3 class="text-xl font-bold text-center mb-6">자율 에너지 노드: 작동 원리</h3>
+                <div class="flex flex-col md:flex-row items-center justify-around space-y-6 md:space-y-0 md:space-x-4 text-center">
+                    <div class="flex-1">
+                        <div class="text-4xl mb-2">🌊</div>
+                        <h4 class="font-bold">1. 파력 에너지 포집</h4>
+                        <p class="text-sm">부유식 노드가 파도의 상하 운동을 통해 기계적 에너지를 흡수합니다.</p>
+                    </div>
+                    <div class="text-2xl text-slate-300 transform rotate-90 md:rotate-0">➡️</div>
+                    <div class="flex-1">
+                        <div class="text-4xl mb-2">⚙️</div>
+                        <h4 class="font-bold">2. 전력 변환</h4>
+                        <p class="text-sm">내부 터빈과 발전기가 기계적 에너지를 안정적인 전기로 변환합니다.</p>
+                    </div>
+                    <div class="text-2xl text-slate-300 transform rotate-90 md:rotate-0">➡️</div>
+                    <div class="flex-1">
+                        <div class="text-4xl mb-2">🏭</div>
+                        <h4 class="font-bold">3. 선상 가치 창출</h4>
+                        <p class="text-sm">생산된 전기를 즉시 사용하여 수소 생산 또는 데이터센터를 가동합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 md:p-8">
+                <div class="mb-6 border-b border-slate-200">
+                    <nav class="flex space-x-4" aria-label="Tabs">
+                        <button id="tab-h2" class="tab-button active font-medium text-sky-600 border-b-2 border-sky-600 py-2 px-4">그린수소 생산</button>
+                        <button id="tab-compute" class="tab-button text-slate-500 hover:text-slate-700 py-2 px-4">해상 클린 컴퓨팅</button>
+                    </nav>
+                </div>
+                <div id="content-h2" class="tab-content">
+                    <h3 class="text-xl font-bold mb-2">사업 #1: 그린수소 및 청정 연료</h3>
+                    <p>노드에 탑재된 전해조를 통해 파력 전기로 물을 분해하여 그린수소를 생산합니다. 생산된 수소는 압축 저장 후, 해상에서 직접 운송 선박에 공급됩니다. 이는 탈탄소화 압력이 높은 해운 산업에 이상적인 연료 솔루션을 제공하며, 육상 인프라 없이 거대한 수요 시장을 공략합니다.</p>
+                </div>
+                <div id="content-compute" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-2">사업 #2: 해상 클린 컴퓨팅</h3>
+                    <p>노드 내부에 컴퓨팅 클러스터(데이터센터)를 설치하고, 파력 에너지로 전력을 공급합니다. 주변의 차가운 해수를 이용한 '무료 냉각'으로 육상 데이터센터 대비 운영 비용을 획기적으로 절감합니다. AI와 고성능 컴퓨팅(HPC)의 폭발적인 에너지 수요에 대한 혁신적인 해결책입니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Potential -->
+        <section id="market" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">3. 시장 잠재력</h2>
+            <p class="mb-8 text-lg text-slate-600">Panthalassa는 파력, 그린수소, 부유식 데이터센터라는 세 개의 거대 시장이 교차하는 지점에 위치합니다. 각 시장의 성장 잠재력을 차트로 확인하세요.</p>
+            <div class="card p-6 md:p-8">
+                <h3 class="text-xl font-bold text-center mb-4">목표 시장 규모 성장 예측 (단위: 10억 달러)</h3>
+                <div class="chart-container">
+                    <canvas id="marketChart"></canvas>
+                </div>
+                <p class="text-center text-sm mt-4 text-slate-500">차트의 막대에 마우스를 올리면 상세 정보를 볼 수 있습니다.</p>
+            </div>
+        </section>
+
+        <!-- Competition -->
+        <section id="competition" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">4. 경쟁 환경</h2>
+            <p class="mb-8 text-lg text-slate-600">Panthalassa의 진정한 경쟁력은 개별 기술이 아닌 비즈니스 모델에 있습니다. 주요 파력 에너지 기업들과의 차별점을 비교 분석합니다.</p>
+            <div class="card overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="p-4 font-bold">기업</th>
+                            <th class="p-4 font-bold">기술 접근법</th>
+                            <th class="p-4 font-bold">핵심 비즈니스 모델</th>
+                            <th class="p-4 font-bold">Panthalassa와의 차이점</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b bg-sky-50">
+                            <td class="p-4 font-bold text-sky-700">Panthalassa</td>
+                            <td class="p-4">단순/견고한 점 흡수형</td>
+                            <td class="p-4 font-bold">에너지는 바다에 머문다 (H2/컴퓨팅)</td>
+                            <td class="p-4 font-bold text-sky-700">기준점</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-4">CorPower Ocean</td>
+                            <td class="p-4">고효율 위상 제어 기술</td>
+                            <td class="p-4">그리드 연계 전력 판매</td>
+                            <td class="p-4">육상 전력망 의존, LCoE 직접 경쟁</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-4">CalWave</td>
+                            <td class="p-4">완전 잠수형 압력차 장치</td>
+                            <td class="p-4">그리드 연계 전력, 담수화</td>
+                            <td class="p-4">육상 전력망 의존, 다른 잠수형 기술</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4">Ocean Power Tech.</td>
+                            <td class="p-4">소규모 원격 자산 전력 공급</td>
+                            <td class="p-4">서비스형 전력/데이터(PaaS/DaaS)</td>
+                            <td class="p-4">유틸리티 규모가 아닌 틈새시장 집중</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+             <div class="mt-6 text-center bg-yellow-100 text-yellow-800 p-4 rounded-lg">
+                <p><strong class="font-bold">핵심 차별점:</strong> 경쟁사 대부분이 '더 나은 발전기'를 만들어 전력망에 비싼 값에 팔려고 경쟁하는 반면, Panthalassa는 '바다 위의 공장'을 만들어 전력망 경쟁 자체를 회피합니다.</p>
+            </div>
+        </section>
+
+        <!-- Risk Assessment -->
+        <section id="risk" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">5. 종합 리스크 평가</h2>
+            <p class="mb-8 text-lg text-slate-600">투자에 따르는 주요 리스크와 회사의 잠재적 완화 전략을 정리했습니다. 각 리스크 항목을 클릭하여 상세 내용을 확인하세요.</p>
+            <div class="space-y-4">
+                <div class="card">
+                    <button class="risk-toggle w-full text-left p-4 flex justify-between items-center">
+                        <span class="font-bold text-lg">⚙️ 기술적 리스크</span>
+                        <span class="transform transition-transform text-2xl font-light">+</span>
+                    </button>
+                    <div class="risk-content hidden p-4 border-t">
+                        <p><strong>주요 리스크:</strong> kWh당 $0.02 LCoE 달성 실패, 극한 해양 환경에서의 장기 신뢰성 및 생존성 미입증, 대규모 시스템 통합 효율 문제.</p>
+                        <p><strong>완화 전략(추정):</strong> 단순/신뢰성 높은 기술 채택, 반복적 프로토타입(Ocean-1, 2) 개발, 엘리트 엔지니어링 팀의 역량.</p>
+                    </div>
+                </div>
+                 <div class="card">
+                    <button class="risk-toggle w-full text-left p-4 flex justify-between items-center">
+                        <span class="font-bold text-lg">📈 시장 리스크</span>
+                        <span class="transform transition-transform text-2xl font-light">+</span>
+                    </button>
+                    <div class="risk-content hidden p-4 border-t">
+                        <p><strong>주요 리스크:</strong> 그린수소 채택 지연, 경쟁 연료 가격 급락, 부유식 데이터센터를 위한 더 우월한 기술의 등장.</p>
+                        <p><strong>완화 전략(추정):</strong> 수소와 컴퓨팅의 이중 활용 전략으로 유연성 확보, 규제 압력이 높은 해운 시장을 초기 목표로 설정.</p>
+                    </div>
+                </div>
+                 <div class="card">
+                    <button class="risk-toggle w-full text-left p-4 flex justify-between items-center">
+                        <span class="font-bold text-lg">🛠️ 실행 및 운영 리스크</span>
+                        <span class="transform transition-transform text-2xl font-light">+</span>
+                    </button>
+                    <div class="risk-content hidden p-4 border-t">
+                        <p><strong>주요 리스크:</strong> 대량 생산 체제 전환 실패, 전 세계에 분산된 자율 노드 선단의 배치 및 유지보수 물류 문제.</p>
+                        <p><strong>완화 전략(추정):</strong> 대량 생산에 용이한 '강철 껍질' 설계, 강력한 운영팀 구축, 특허 기반의 운송/연결 시스템.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <button class="risk-toggle w-full text-left p-4 flex justify-between items-center">
+                        <span class="font-bold text-lg">⚖️ 규제 및 환경 리스크</span>
+                        <span class="transform transition-transform text-2xl font-light">+</span>
+                    </button>
+                    <div class="risk-content hidden p-4 border-t">
+                        <p><strong>주요 리스크:</strong> 대형 구조물 배치에 대한 복잡한 인허가 절차, 예기치 않은 환경 영향 발생 가능성.</p>
+                        <p><strong>완화 전략(추정):</strong> 당국과의 조기 협의, 해저 케이블이 필요 없는 모델로 규제 부담 완화 가능성.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team & Investors -->
+        <section id="team" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold mb-2 section-title">6. 팀 및 주요 투자자</h2>
+            <p class="mb-8 text-lg text-slate-600">회사의 비전을 현실로 만들고 있는 사람들과 그들을 믿고 투자한 최고의 투자자들을 소개합니다. 이는 회사의 신뢰도와 실행력을 보여주는 중요한 지표입니다.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="font-bold text-xl mb-4 text-center">리더십 및 팀</h3>
+                    <div class="text-center mb-4">
+                        <p class="font-bold">Garth Sheldon-Coulson (CEO)</p>
+                        <p class="text-sm">MIT, Harvard Law, Bridgewater Associates 출신</p>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-lg text-center">
+                        <p class="font-semibold">"A-Team" Culture</p>
+                        <p class="text-sm">SpaceX, Google, Blue Origin, Apple, Tesla 등 세계 최고의 기업들로부터 유치한 엘리트 엔지니어링 인재들이 포진하여 회사의 비전과 기술적 도전에 대한 매력도를 증명합니다.</p>
+                    </div>
+                </div>
+                <div class="card p-6">
+                     <h3 class="font-bold text-xl mb-4 text-center">주요 투자 신디케이트</h3>
+                    <p class="mb-4">딥테크 및 기후 기술 분야의 최고 VC들이 투자에 참여하여, 회사의 기술과 비전에 대한 강력한 신뢰를 보증합니다. 이들은 단순한 재무적 투자자를 넘어, 네트워크와 통찰력을 제공하는 전략적 파트너입니다.</p>
+                    <div class="flex flex-wrap justify-center items-center gap-4">
+                        <div class="bg-slate-200 text-slate-700 py-2 px-4 rounded-full font-semibold">Lowercarbon Capital</div>
+                        <div class="bg-slate-200 text-slate-700 py-2 px-4 rounded-full font-semibold">Founders Fund</div>
+                        <div class="bg-slate-200 text-slate-700 py-2 px-4 rounded-full font-semibold">GigaFund</div>
+                        <div class="bg-slate-200 text-slate-700 py-2 px-4 rounded-full font-semibold">Unless</div>
+                        <div class="bg-slate-200 text-slate-700 py-2 px-4 rounded-full font-semibold">Climate Capital</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Recommendation -->
+        <section id="recommendation" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold mb-2 section-title">7. 최종 권고 및 다음 단계</h2>
+            <p class="mb-8 text-lg text-slate-600">Panthalassa는 새로운 산업을 개척할 잠재력을 지닌 고위험-고수익 투자 기회입니다. 성공적인 투자를 위해 다음 단계로 제시된 핵심 질문들에 대한 확증적 실사를 진행할 것을 권고합니다.</p>
+            <div class="card p-8">
+                <h3 class="font-bold text-xl mb-6 text-center">핵심 실사(Due Diligence) 체크리스트</h3>
+                <ul class="space-y-4">
+                    <li class="flex items-start">
+                        <span class="text-sky-600 mr-3 mt-1">✔️</span>
+                        <span><strong>LCoE 모델 검증:</strong> kWh당 $0.02 주장을 뒷받침하는 완전하고 감사 가능한 LCoE 모델을 요구하고 검토해야 합니다.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-sky-600 mr-3 mt-1">✔️</span>
+                        <span><strong>성능 데이터 확인:</strong> 'Ocean-1' 및 'Ocean-2' 해상 시험에서 얻은 모든 성능 및 신뢰성 데이터를 확보해야 합니다.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-sky-600 mr-3 mt-1">✔️</span>
+                        <span><strong>제조 로드맵 분석:</strong> 대규모 생산을 달성하기 위한 상세한 기술 및 제조 로드맵을 평가해야 합니다.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-sky-600 mr-3 mt-1">✔️</span>
+                        <span><strong>규제 전략 파악:</strong> 복잡한 해양 규제 환경을 헤쳐나가기 위한 회사의 구체적인 전략을 확인해야 합니다.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-sky-600 mr-3 mt-1">✔️</span>
+                        <span><strong>법인 구조 명확화:</strong> 과거 사명(Wavebase) 및 IP 지주회사(Lone Gull Holdings) 구조에 대한 명확한 설명을 요구해야 합니다.</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-300 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>&copy; 2024 Panthalassa 전략적 투자 검토 보고서. 정보 제공 목적으로 제작되었습니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Tab functionality
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.id.replace('tab-', 'content-');
+                    
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active', 'font-medium', 'text-sky-600', 'border-sky-600');
+                        btn.classList.add('text-slate-500', 'hover:text-slate-700');
+                    });
+                    
+                    button.classList.add('active', 'font-medium', 'text-sky-600', 'border-sky-600');
+                    button.classList.remove('text-slate-500', 'hover:text-slate-700');
+
+                    tabContents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Risk toggle
+            const riskToggles = document.querySelectorAll('.risk-toggle');
+            riskToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const content = toggle.nextElementSibling;
+                    const icon = toggle.querySelector('span:last-child');
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-45');
+                    if (icon.textContent === '+') {
+                        icon.textContent = '-';
+                    } else {
+                        icon.textContent = '+';
+                    }
+                });
+            });
+
+            // Navigation highlighting
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // Market Chart
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            const marketData = {
+                labels: ['파력/조력 에너지', '그린수소', '부유식 데이터센터'],
+                datasets: [
+                    {
+                        label: '2024년 시장 규모 (추정)',
+                        data: [0.8, 8.4, 0.3], // 8억, 84억, 3억
+                        backgroundColor: 'rgba(56, 189, 248, 0.6)', // sky-400
+                        borderColor: 'rgba(2, 132, 199, 1)', // sky-600
+                        borderWidth: 1
+                    },
+                    {
+                        label: '~2032년 예측 시장 규모',
+                        data: [1.8, 125, 0.8], // 18억, 1250억, 8억
+                        backgroundColor: 'rgba(20, 184, 166, 0.6)', // teal-500
+                        borderColor: 'rgba(15, 118, 110, 1)', // teal-700
+                        borderWidth: 1
+                    }
+                ]
+            };
+            new Chart(ctx, {
+                type: 'bar',
+                data: marketData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '$' + context.parsed.y + 'B';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: '시장 규모 (10억 달러, 로그 스케일)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
