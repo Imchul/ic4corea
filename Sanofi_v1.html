@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanofi AI 혁신 인터랙티브 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Corporate (Warm neutrals like beige/off-white, dark gray for text, a muted professional blue for accents) -->
+    <!-- Application Structure Plan: A single-page dashboard design with a persistent top navigation bar (Dashboard, 3 Innovation Areas, Keys to Success, Our Path). This non-linear structure allows the CEO to freely explore high-level KPIs on the dashboard or dive deep into specific areas like R&D partnerships or the proposed roadmap. This is more user-friendly than a linear report, promoting exploration and direct access to key information based on the user's immediate interest. -->
+    <!-- Visualization & Content Choices: 
+    - KPIs: Goal: Inform/Intrigue. Method: Large stat cards. Interaction: Hover effects, click-to-scroll. Justification: Provides a quick, high-impact overview.
+    - R&D Speed: Goal: Compare. Method: Chart.js Horizontal Bar Chart. Interaction: Tooltips on hover. Justification: Clearly visualizes the dramatic time savings, a key R&D metric.
+    - Partnerships: Goal: Organize/Inform. Method: Interactive HTML/CSS grid. Interaction: Click to reveal details. Justification: Organizes complex partner information cleanly without clutter.
+    - Success Factors: Goal: Organize. Method: Interactive HTML cards. Interaction: Click to expand. Justification: Presents core strategic takeaways in a digestible format.
+    - Roadmap: Goal: Show Change/Process. Method: HTML/CSS stepper/timeline. Interaction: Click a step to see details. Justification: Visually communicates the multi-phase plan in an intuitive, step-by-step manner.
+    - Library/Method: All charts via Chart.js (Canvas). All diagrams and layouts via HTML/CSS/Tailwind. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F8F7F4;
+            color: #333;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            width: 100%;
+            max-width: 800px;
+            max-height: 400px;
+        }
+        .nav-link {
+            transition: all 0.3s;
+        }
+        .nav-link.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .section-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .section-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tab-button.active {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-800">Sanofi AI 혁신 대시보드</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-b-2 border-transparent">대시보드</a>
+                        <a href="#innovation" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-b-2 border-transparent">3대 혁신 영역</a>
+                        <a href="#success" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-b-2 border-transparent">성공의 열쇠</a>
+                        <a href="#roadmap" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 border-b-2 border-transparent">우리의 로드맵</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="home" class="section-fade-in text-center mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                Sanofi, AI로 비즈니스와 R&D를 다시 쓰다
+            </h2>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+                CEO를 위한 Sanofi AI 혁신 전략 심층 분석: 어떻게 경쟁의 규칙을 바꾸고, 우리는 무엇을 배울 것인가?
+            </p>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                    <h3 class="text-sm font-semibold text-gray-500">R&D | 임상시험 혁신</h3>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">최대 50%</p>
+                    <p class="text-gray-600">디지털 트윈으로 임상 참여 환자 수 절감 (기대효과)</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                    <h3 class="text-sm font-semibold text-gray-500">운영 | 비용 절감</h3>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">약 4천억원</p>
+                    <p class="text-gray-600">'plai' 플랫폼 도입으로 창출한 연간 비즈니스 가치</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+                    <h3 class="text-sm font-semibold text-gray-500">제조 | 품질 관리</h3>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">60%</p>
+                    <p class="text-gray-600">AI 기반 품질 편차(Deviation) 문제 해결 시간 단축</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+                    <h3 class="text-sm font-semibold text-gray-500">R&D | 업무 자동화</h3>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">70% 이상</p>
+                    <p class="text-gray-600">연간 보고서(PQR) 작성 시간 단축 (목표)</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="innovation" class="section-fade-in mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Sanofi의 AI 혁신 3대 영역</h2>
+                <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">Sanofi는 R&D, 제조, 운영 전반에 AI를 통합하여 시너지를 창출하는 전사적 트랜스포메이션을 추진하고 있습니다. 각 영역의 혁신 사례를 탐색해 보세요.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
+                <div class="flex justify-center border-b border-gray-200 mb-6">
+                    <button class="tab-button active py-3 px-6 text-sm font-medium text-gray-600 hover:bg-gray-100 transition" data-tab="rd">R&D 혁신</button>
+                    <button class="tab-button py-3 px-6 text-sm font-medium text-gray-600 hover:bg-gray-100 transition" data-tab="mfg">제조 혁신</button>
+                    <button class="tab-button py-3 px-6 text-sm font-medium text-gray-600 hover:bg-gray-100 transition" data-tab="ops">운영 혁신</button>
+                </div>
+                
+                <div id="rd" class="tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">AI 기반 R&D '속도' 혁명</h3>
+                            <p class="text-gray-600 mb-6">AI를 통해 신약개발의 가장 큰 병목 구간이었던 시간 문제를 해결하고 있습니다. 특히 후보물질 발굴, 백신 설계 등 핵심 프로세스에서 극적인 시간 단축 성과를 보입니다.</p>
+                            <div class="chart-container">
+                                <canvas id="rdChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">개방형 혁신 생태계</h3>
+                            <p class="text-gray-600 mb-6">최고의 기술을 가진 외부 파트너와 '공동 창조'하는 파트너십을 구축했습니다. 아래 파트너를 클릭하여 협력 방식을 확인해 보세요.</p>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="partner-card border border-gray-200 p-4 rounded-lg text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300" data-partner="openai">
+                                    <p class="font-bold">OpenAI & Formation Bio</p>
+                                    <p class="text-sm text-gray-500">데이터 동맹 모델</p>
+                                </div>
+                                <div class="partner-card border border-gray-200 p-4 rounded-lg text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300" data-partner="insilico">
+                                    <p class="font-bold">Insilico Medicine</p>
+                                    <p class="text-sm text-gray-500">난제 해결 모델</p>
+                                </div>
+                                <div class="partner-card border border-gray-200 p-4 rounded-lg text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300" data-partner="aqemia">
+                                    <p class="font-bold">AQEMIA</p>
+                                    <p class="text-sm text-gray-500">기술 수혈 모델</p>
+                                </div>
+                                <div class="partner-card border border-gray-200 p-4 rounded-lg text-center cursor-pointer hover:bg-blue-50 hover:border-blue-300" data-partner="owkin">
+                                    <p class="font-bold">Owkin & Exscientia</p>
+                                    <p class="text-sm text-gray-500">환자 데이터 활용 모델</p>
+                                </div>
+                            </div>
+                            <div id="partner-details" class="bg-gray-50 p-4 rounded-md min-h-[100px] text-gray-700">
+                                파트너를 선택하면 상세 설명이 표시됩니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mfg" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">스마트 팩토리 'Pharma 4.0' 구현</h3>
+                    <p class="text-gray-600 mb-6">차세대 스마트 공장에 디지털 트윈, IoT, 예측 분석 기술을 집약하여 생산성과 품질을 동시에 혁신하고 있습니다.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h4 class="font-bold text-lg text-gray-800">예측 정비 및 수율 최적화</h4>
+                            <p class="mt-2 text-gray-600">AI로 설비 고장을 사전에 예측하여 가동 중단을 방지하고, 생산 데이터를 분석해 수율을 저해하는 요인을 찾아 공정을 최적화합니다.</p>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h4 class="font-bold text-lg text-gray-800">품질 관리 자동화</h4>
+                            <p class="mt-2 text-gray-600">생산 과정에서 발생하는 사소한 편차(Deviation) 관리 및 보고 프로세스를 자동화하여 문제 해결 시간을 60% 단축했습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ops" class="tab-content hidden">
+                     <h3 class="text-xl font-bold mb-4 text-gray-800">데이터 기반 의사결정의 일상화</h3>
+                    <p class="text-gray-600 mb-6">전사적 데이터 통합 및 AI 분석 플랫폼 'plai'를 통해 모든 임직원이 실시간 데이터에 기반한 의사결정을 내릴 수 있는 환경을 구축했습니다.</p>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h4 class="font-bold text-lg text-gray-800">비용 절감 및 리스크 관리</h4>
+                            <p class="mt-2 text-gray-600">공급망 데이터를 분석하여 재고 부족 리스크를 80% 정확도로 예측하고, 이를 통해 약 4천억 원의 비즈니스 가치를 창출했습니다.</p>
+                             <h4 class="font-bold text-lg text-gray-800 mt-4">신속한 경영진 의사결정</h4>
+                            <p class="mt-2 text-gray-600">CEO는 모바일 앱으로 언제 어디서든 KPI를 확인하고 'What-if' 시나리오 분석을 통해 데이터 기반의 신속하고 정교한 전략적 의사결정을 내립니다.</p>
+                        </div>
+                         <div class="bg-gray-50 p-6 rounded-lg">
+                             <h4 class="font-bold text-center text-lg text-gray-800 mb-4">'plai'의 재고 부족 리스크 예측 정확도</h4>
+                            <div class="chart-container" style="height: 250px; max-height: 250px;">
+                                <canvas id="opsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="success" class="section-fade-in mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">왜 Sanofi는 AI 혁신에 성공했나?</h2>
+                <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">Sanofi의 성공은 기술 도입을 넘어, 명확한 비전, 민첩한 조직, 데이터 중심 문화라는 '성공의 삼위일체'가 완벽한 조화를 이루었기 때문입니다.</p>
+            </div>
+            <div class="space-y-4">
+                <div class="success-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <button class="w-full text-left p-6 flex justify-between items-center focus:outline-none">
+                        <span class="text-xl font-bold text-blue-700">① CEO의 명확한 비전과 강력한 리더십</span>
+                        <span class="text-2xl text-blue-700 transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="expand-content">
+                        <div class="p-6 pt-0 text-gray-600">
+                            <p>"2030년까지 AI-first 바이오파마로 변신한다"는 CEO 폴 허드슨의 대담하고 명확한 비전 선포는 회사의 모든 전략적 의사결정과 자원 배분의 최우선 순위가 AI임을 각인시켰습니다. 그는 'AI 워싱'을 경계하고, AI가 소수 전문가의 전유물이 아닌 모든 구성원의 혁신 도구라는 공감대를 형성하며 변화를 직접 이끌었습니다.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="success-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <button class="w-full text-left p-6 flex justify-between items-center focus:outline-none">
+                        <span class="text-xl font-bold text-green-700">② 스타트업 방식의 민첩한 실행 조직</span>
+                        <span class="text-2xl text-green-700 transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="expand-content">
+                        <div class="p-6 pt-0 text-gray-600">
+                            <p>'디지털 액셀러레이터'라는 내부 스타트업 형태의 전담 조직을 설립, 관료주의에서 벗어나 독립적이고 민첩하게 움직였습니다. 이들은 90일 단위로 실제 작동하는 최소기능제품(MVP)을 출시하는 데 집중하여 빠른 성공 사례를 조기에 창출하고, "AI는 실제로 가능하다"는 믿음과 자발적 참여를 조직 전체에 확산시켰습니다.</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="success-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <button class="w-full text-left p-6 flex justify-between items-center focus:outline-none">
+                        <span class="text-xl font-bold text-purple-700">③ 성과 중심의 전략적 파트너십과 문화 혁신</span>
+                        <span class="text-2xl text-purple-700 transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="expand-content">
+                        <div class="p-6 pt-0 text-gray-600">
+                           <p>구체적인 비즈니스 문제를 정의하고, 이를 가장 잘 해결할 수 있는 외부 파트너(OpenAI 등)를 적극적으로 찾아 나섰습니다. 동시에, 기술을 사용하는 '사람과 문화'의 변화가 중요함을 인지하고, CEO를 포함한 전사적 리더 대상 데이터/AI 역량 강화 교육을 통해 데이터 중심의 사고방식을 조직 문화로 내재화했습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap" class="section-fade-in">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Sanofi가 우리에게 주는 교훈과 AI 추진 로드맵</h2>
+                <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">Sanofi 사례를 바탕으로 우리 회사가 즉시 실행할 수 있는 현실적인 AI 추진 로드맵을 제안합니다.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">핵심 교훈 (Key Lessons)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="bg-gray-50 p-4 rounded-md"><strong>1. 리더십의 문제:</strong> AI 혁신은 기술이 아닌 CEO의 확고한 의지와 리더십에 달려있다.</div>
+                    <div class="bg-gray-50 p-4 rounded-md"><strong>2. 작고 빠른 성공:</strong> 거창한 계획보다 3개월 내 성과를 내는 작은 성공이 조직을 움직인다.</div>
+                    <div class="bg-gray-50 p-4 rounded-md"><strong>3. 최고의 파트너:</strong> 모든 것을 직접 할 수 없다. 외부 최고 파트너와 함께 가야 한다.</div>
+                    <div class="bg-gray-50 p-4 rounded-md"><strong>4. 데이터는 원유:</strong> AI 모델의 성능은 데이터가 결정한다. 지금부터 데이터 자산화를 준비해야 한다.</div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-800 mb-8">우리 회사를 위한 AI 추진 로드맵</h3>
+                <div class="relative">
+                    <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-gray-200 hidden md:block"></div>
+                    <div class="space-y-12">
+                        <div class="roadmap-step flex md:items-center flex-col md:flex-row">
+                            <div class="md:w-1/2 md:pr-8 text-center md:text-right">
+                                <div class="inline-block bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-2">1</div>
+                                <h4 class="text-xl font-bold text-gray-800">Phase 1: 기반 구축</h4>
+                                <p class="text-gray-500">1 ~ 6개월</p>
+                            </div>
+                            <div class="md:w-1/2 md:pl-8 mt-4 md:mt-0">
+                                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                                    <p class="font-semibold">핵심 활동:</p>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
+                                        <li>CEO 직속 'AI 혁신 TF' 구성 (5-7명)</li>
+                                        <li>3개월 내 성과 창출 가능한 파일럿 과제 선정</li>
+                                        <li>전사 데이터 현황 진단 및 표준화 계획 수립</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="roadmap-step flex md:items-center flex-col md:flex-row-reverse">
+                            <div class="md:w-1/2 md:pl-8 text-center md:text-left">
+                                <div class="inline-block bg-green-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-2">2</div>
+                                <h4 class="text-xl font-bold text-gray-800">Phase 2: 확장</h4>
+                                <p class="text-gray-500">7 ~ 18개월</p>
+                            </div>
+                            <div class="md:w-1/2 md:pr-8 mt-4 md:mt-0">
+                                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                                    <p class="font-semibold">핵심 활동:</p>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
+                                        <li>'AI 혁신 TF'를 'AI CoE'로 확대/정규 조직화</li>
+                                        <li>R&D 핵심 분야 외부 파트너십 체결</li>
+                                        <li>핵심 인력 대상 AI/데이터 리터러시 교육 시작</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="roadmap-step flex md:items-center flex-col md:flex-row">
+                           <div class="md:w-1/2 md:pr-8 text-center md:text-right">
+                                <div class="inline-block bg-purple-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-2">3</div>
+                                <h4 class="text-xl font-bold text-gray-800">Phase 3: 통합</h4>
+                                <p class="text-gray-500">19 ~ 36개월</p>
+                            </div>
+                            <div class="md:w-1/2 md:pl-8 mt-4 md:mt-0">
+                                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                                    <p class="font-semibold">핵심 활동:</p>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
+                                        <li>전사 AI 거버넌스 체계 구축</li>
+                                        <li>주요 비즈니스 프로세스에 AI 솔루션 내재화</li>
+                                        <li>AI 기반 신규 파이프라인 자산 창출</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-200">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>&copy; 2025 Our Company. All Rights Reserved.</p>
+            <p class="text-sm mt-1">이 보고서는 Sanofi AI 혁신 사례 분석을 기반으로 작성되었습니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const partnerDetails = {
+                openai: {
+                    title: "OpenAI & Formation Bio (데이터 동맹 모델)",
+                    desc: "Sanofi의 독점적인 전임상/임상 데이터를 기반으로 신약 개발에 최적화된 맞춤형 AI 모델을 '공동으로' 개발합니다. 이는 고품질 산업 데이터와 최고 수준의 AI 기술이 결합된 Win-Win 구조입니다."
+                },
+                insilico: {
+                    title: "Insilico Medicine (난제 해결 모델)",
+                    desc: "기존 방식으로는 약물 개발이 어려웠던 'undruggable' 표적에 도전하기 위해, 이 분야에 특화된 생성형 AI 플랫폼을 보유한 전문 바이오텍과 협력하여 R&D의 성공 확률 자체를 높입니다."
+                },
+                aqemia: {
+                    title: "AQEMIA (Best-of-Breed 기술 수혈 모델)",
+                    desc: "양자물리학과 생성형 AI를 결합한 독창적 기술을 가진 스타트업과 협력, 특정 기술 영역에서 세계 최고 수준의 역량을 빠르게 수혈하여 R&D 파이프라인에 접목하는 실용적 접근입니다."
+                },
+                owkin: {
+                    title: "Owkin & Exscientia (환자 중심 데이터 활용 모델)",
+                    desc: "실제 환자의 복합적인 데이터(유전체, 임상, 이미지 등)를 AI 모델 학습에 직접 활용하여, '개인 맞춤 치료'로 신약 개발 패러다임을 전환하는 데 핵심적인 역할을 합니다."
+                }
+            };
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        if (content.id === tabId) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            const partnerCards = document.querySelectorAll('.partner-card');
+            const partnerDetailsContainer = document.getElementById('partner-details');
+
+            partnerCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const partnerId = card.dataset.partner;
+                    const details = partnerDetails[partnerId];
+                    
+                    partnerCards.forEach(c => c.classList.remove('bg-blue-100', 'border-blue-400'));
+                    card.classList.add('bg-blue-100', 'border-blue-400');
+
+                    partnerDetailsContainer.innerHTML = `
+                        <h4 class="font-bold text-gray-900">${details.title}</h4>
+                        <p class="mt-2 text-sm">${details.desc}</p>
+                    `;
+                });
+            });
+
+            const successCards = document.querySelectorAll('.success-card');
+            successCards.forEach(card => {
+                const button = card.querySelector('button');
+                const content = card.querySelector('.expand-content');
+                const icon = button.querySelector('span:last-child');
+
+                button.addEventListener('click', () => {
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            const sections = document.querySelectorAll('.section-fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const navObserver = new IntersectionObserver((entries) => {
+                 entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px" });
+            document.querySelectorAll('main section').forEach(section => {
+                navObserver.observe(section);
+            });
+
+            navLinks.forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            const createRdChart = () => {
+                const ctx = document.getElementById('rdChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['mRNA 서열 설계', 'LNP 예측 프로세스', '품질 편차 관리', '연간보고서 작성'],
+                        datasets: [{
+                            label: '시간 단축률 (%)',
+                            data: [50, 95, 60, 70],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(34, 197, 94, 0.7)',
+                                'rgba(234, 179, 8, 0.7)',
+                                'rgba(168, 85, 247, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(234, 179, 8, 1)',
+                                'rgba(168, 85, 247, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.x !== null) {
+                                            if (context.label === 'LNP 예측 프로세스') {
+                                               return '수개월 → 수일로 단축';
+                                            }
+                                            label += context.parsed.x + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '주요 R&D 및 업무 프로세스 시간 단축 성과'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const createOpsChart = () => {
+                const ctx = document.getElementById('opsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['예측 성공', '불확실성'],
+                        datasets: [{
+                            data: [80, 20],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(229, 231, 235, 0.7)'
+                            ],
+                             borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(229, 231, 235, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.parsed + '%';
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+            
+            createRdChart();
+            createOpsChart();
+        });
+    </script>
+</body>
+</html>
