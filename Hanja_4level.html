@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한자 퀴즈 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+            background-color: #f0f4f8; /* slate-100 */
+        }
+        .quiz-card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+            border: 2px solid #e5e7eb; /* gray-200 */
+        }
+        .option-btn:hover {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+        }
+        .correct {
+            background-color: #10b981 !important; /* emerald-500 */
+            color: white !important;
+            border-color: #059669 !important;
+            transform: scale(1.03);
+        }
+        .incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .disabled-options .option-btn:not(.correct):not(.incorrect) {
+            opacity: 0.6;
+        }
+        .disabled-options {
+            pointer-events: none;
+        }
+        #answer-details, #nextBtn {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+        .progress-bar-bg {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        .progress-bar {
+            background-color: #3b82f6; /* blue-500 */
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-lg mx-auto">
+        <header class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <h1 id="modeTitle" class="text-2xl font-bold text-slate-800">한자 퀴즈</h1>
+                <div class="text-right">
+                    <span class="text-sm font-medium text-slate-600">점수</span>
+                    <p id="score" class="text-2xl font-bold text-indigo-600">0</p>
+                </div>
+            </div>
+            <div class="progress-bar-bg w-full h-3 rounded-full overflow-hidden">
+                <div id="progressBar" class="progress-bar h-full rounded-full"></div>
+            </div>
+            <p id="progress" class="text-right text-sm text-slate-500 mt-1">1 / 755</p>
+        </header>
+
+        <!-- Quiz Area -->
+        <div class="quiz-card p-6">
+            <div id="hanja-question" class="text-9xl text-center mb-8 font-bold text-slate-800" lang="zh-CN"></div>
+            <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Option buttons will be inserted here -->
+            </div>
+            <!-- Answer Details Section -->
+            <div id="answer-details" class="hidden opacity-0 mt-6 text-center border-t-2 pt-4">
+                <p class="text-3xl font-bold text-indigo-700"><span id="detail-tteut"></span> <span id="detail-eum"></span></p>
+                <p class="text-md text-slate-500 mt-3 font-medium">📖 예시 단어</p>
+                <div class="mt-2 text-lg font-semibold text-indigo-500 space-y-1">
+                    <p id="detail-example1"></p>
+                    <p id="detail-example2"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls" class="mt-4 flex flex-col space-y-3">
+             <button id="nextBtn" class="hidden opacity-0 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg flex items-center justify-center">
+                다음 문제
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </button>
+            <div class="flex justify-between items-center space-x-3">
+                <button id="reviewBtn" class="bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl shadow-sm w-1/2 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                    틀린 한자 (<span id="incorrectCount">0</span>)
+                </button>
+                 <button id="restartBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl shadow-md w-1/2 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm1-1a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 0 01-1-1V1z" clip-rule="evenodd" /></svg>
+                    <span id="restartBtnText">처음부터</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal for results -->
+        <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center hidden z-50">
+            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-11/12 max-w-sm transform transition-all" style="opacity: 0; transform: scale(0.95);">
+                <h2 id="modalTitle" class="text-3xl font-bold mb-4 text-slate-800">퀴즈 완료!</h2>
+                <p id="modalMessage" class="text-lg mb-6 text-slate-600">모든 한자를 학습했습니다!</p>
+                <button id="modalCloseBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg w-full">
+                    다시하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hanjaData = [
+            // Page 1
+            { hanja: '街', eum: '가', tteut: '거리', example1: '가로등(街路燈)', example2: '시가(市街)' },
+            { hanja: '價', eum: '가', tteut: '값', example1: '가격(價格)', example2: '물가(物價)' },
+            { hanja: '歌', eum: '가', tteut: '노래', example1: '가수(歌手)', example2: '교가(校歌)' },
+            { hanja: '加', eum: '가', tteut: '더할', example1: '가속(加速)', example2: '첨가(添加)' },
+            { hanja: '可', eum: '가', tteut: '옳을', example1: '가능(可能)', example2: '허가(許可)' },
+            { hanja: '家', eum: '가', tteut: '집', example1: '가족(家族)', example2: '국가(國家)' },
+            { hanja: '各', eum: '각', tteut: '각각', example1: '각국(各國)', example2: '각자(各自)' },
+            { hanja: '角', eum: '각', tteut: '뿔', example1: '각도(角度)', example2: '삼각형(三角形)' },
+            { hanja: '間', eum: '간', tteut: '사이', example1: '시간(時間)', example2: '인간(人間)' },
+            { hanja: '看', eum: '간', tteut: '볼', example1: '간호(看護)', example2: '간판(看板)' },
+            { hanja: '甘', eum: '감', tteut: '달', example1: '감초(甘草)', example2: '감미(甘味)' },
+            { hanja: '感', eum: '감', tteut: '느낄', example1: '감동(感動)', example2: '감사(感謝)' },
+            { hanja: '江', eum: '강', tteut: '강', example1: '강변(江邊)', example2: '한강(漢江)' },
+            { hanja: '强', eum: '강', tteut: '굳셀', example1: '강력(强力)', example2: '강조(強調)' },
+            { hanja: '講', eum: '강', tteut: '욀', example1: '강의(講義)', example2: '강연(講演)' },
+            { hanja: '開', eum: '개', tteut: '열', example1: '개발(開發)', example2: '개방(開放)' },
+            { hanja: '皆', eum: '개', tteut: '다', example1: '개근(皆勤)', example2: '개석(皆席)' },
+            { hanja: '改', eum: '개', tteut: '고칠', example1: '개선(改善)', example2: '수정(修正)' },
+            { hanja: '個', eum: '개', tteut: '낱', example1: '개인(個人)', example2: '개성(個性)' },
+            { hanja: '客', eum: '객', tteut: '손', example1: '고객(顧客)', example2: '승객(乘客)' },
+            { hanja: '車', eum: '거/차', tteut: '수레', example1: '자전거(自轉車)', example2: '자동차(自動車)' },
+            { hanja: '去', eum: '거', tteut: '갈', example1: '과거(過去)', example2: '제거(除去)' },
+            { hanja: '擧', eum: '거', tteut: '들', example1: '거수(擧手)', example2: '선거(選擧)' },
+            { hanja: '建', eum: '건', tteut: '세울', example1: '건설(建設)', example2: '건물(建物)' },
+            { hanja: '格', eum: '격', tteut: '격식', example1: '가격(價格)', example2: '자격(資格)' },
+            { hanja: '見', eum: '견', tteut: '볼', example1: '의견(意見)', example2: '발견(發見)' },
+            { hanja: '決', eum: '결', tteut: '결단할', example1: '결정(決定)', example2: '해결(解決)' },
+            { hanja: '結', eum: '결', tteut: '맺을', example1: '결과(結果)', example2: '결혼(結婚)' },
+            { hanja: '輕', eum: '경', tteut: '가벼울', example1: '경솔(輕率)', example2: '경감(輕減)' },
+            { hanja: '經', eum: '경', tteut: '지날', example1: '경험(經驗)', example2: '경제(經濟)' },
+            { hanja: '耕', eum: '경', tteut: '밭갈', example1: '경작(耕作)', example2: '농경(農耕)' },
+            { hanja: '京', eum: '경', tteut: '서울', example1: '상경(上京)', example2: '동경(東京)' },
+            { hanja: '景', eum: '경', tteut: '볕', example1: '경치(景致)', example2: '풍경(風景)' },
+            { hanja: '鏡', eum: '경', tteut: '거울', example1: '안경(眼鏡)', example2: '망원경(望遠鏡)' },
+            { hanja: '敬', eum: '경', tteut: '공경할', example1: '존경(尊敬)', example2: '경의(敬意)' },
+            { hanja: '競', eum: '경', tteut: '다툴', example1: '경쟁(競爭)', example2: '경기(競技)' },
+            { hanja: '界', eum: '계', tteut: '지경', example1: '세계(世界)', example2: '한계(限界)' },
+            { hanja: '季', eum: '계', tteut: '계절', example1: '사계절(四季)', example2: '계간(季刊)' },
+            { hanja: '計', eum: '계', tteut: '셀', example1: '계산(計算)', example2: '통계(統計)' },
+            { hanja: '固', eum: '고', tteut: '굳을', example1: '고정(固定)', example2: '완고(頑固)' },
+            { hanja: '高', eum: '고', tteut: '높을', example1: '고속(高速)', example2: '최고(最高)' },
+            { hanja: '苦', eum: '고', tteut: '쓸', example1: '고생(苦生)', example2: '고통(苦痛)' },
+            { hanja: '告', eum: '고', tteut: '알릴', example1: '광고(廣告)', example2: '보고(報告)' },
+            { hanja: '考', eum: '고', tteut: '생각할', example1: '사고(思考)', example2: '참고(參考)' },
+            { hanja: '古', eum: '고', tteut: '옛', example1: '고전(古典)', example2: '고대(古代)' },
+            { hanja: '谷', eum: '곡', tteut: '골', example1: '계곡(溪谷)', example2: '협곡(峽谷)' },
+            { hanja: '曲', eum: '곡', tteut: '굽을', example1: '작곡(作曲)', example2: '곡선(曲線)' },
+            { hanja: '骨', eum: '골', tteut: '뼈', example1: '골절(骨折)', example2: '백골(白骨)' },
+            { hanja: '功', eum: '공', tteut: '공', example1: '성공(成功)', example2: '공로(功勞)' },
+            { hanja: '公', eum: '공', tteut: '공변될', example1: '공원(公園)', example2: '공중(公衆)' },
+            { hanja: '空', eum: '공', tteut: '빌', example1: '공기(空氣)', example2: '항공(航空)' },
+            { hanja: '工', eum: '공', tteut: '장인', example1: '공장(工場)', example2: '공사(工事)' },
+            { hanja: '共', eum: '공', tteut: '함께', example1: '공동(共同)', example2: '공공(公共)' },
+            { hanja: '果', eum: '과', tteut: '실과', example1: '결과(結果)', example2: '효과(效果)' },
+            { hanja: '課', eum: '과', tteut: '과정', example1: '일과(日課)', example2: '과제(課題)' },
+            { hanja: '科', eum: '과', tteut: '과목', example1: '과학(科學)', example2: '학과(學科)' },
+            { hanja: '過', eum: '과', tteut: '지날', example1: '과거(過去)', example2: '통과(通過)' },
+            { hanja: '觀', eum: '관', tteut: '볼', example1: '관광(觀光)', example2: '관찰(觀察)' },
+            { hanja: '關', eum: '관', tteut: '관계할', example1: '관계(關係)', example2: '관심(關心)' },
+            { hanja: '慣', eum: '관', tteut: '익숙할', example1: '습관(習慣)', example2: '관행(慣行)' },
+            { hanja: '光', eum: '광', tteut: '빛', example1: '영광(榮光)', example2: '관광(觀光)' },
+            { hanja: '廣', eum: '광', tteut: '넓을', example1: '광장(廣場)', example2: '광고(廣告)' },
+            { hanja: '橋', eum: '교', tteut: '다리', example1: '육교(陸橋)', example2: '철교(鐵橋)' },
+            { hanja: '交', eum: '교', tteut: '사귈', example1: '교통(交通)', example2: '외교(外交)' },
+            { hanja: '敎', eum: '교', tteut: '가르칠', example1: '교육(敎育)', example2: '교사(敎師)' },
+            { hanja: '校', eum: '교', tteut: '학교', example1: '교실(校室)', example2: '교장(校長)' },
+            { hanja: '球', eum: '구', tteut: '공', example1: '지구(地球)', example2: '야구(野球)' },
+            { hanja: '區', eum: '구', tteut: '구분할', example1: '구역(區域)', example2: '구별(區別)' },
+            { hanja: '求', eum: '구', tteut: '구할', example1: '요구(要求)', example2: '구인(求人)' },
+            { hanja: '句', eum: '구', tteut: '글귀', example1: '문구(文句)', example2: '어구(語句)' },
+            { hanja: '九', eum: '구', tteut: '아홉', example1: '구월(九月)', example2: '구사일생(九死一生)' },
+            { hanja: '究', eum: '구', tteut: '연구할', example1: '연구(硏究)', example2: '탐구(探究)' },
+            { hanja: '口', eum: '구', tteut: '입', example1: '인구(人口)', example2: '출구(出口)' },
+            { hanja: '舊', eum: '구', tteut: '옛', example1: '구식(舊式)', example2: '구관(舊官)' },
+            { hanja: '國', eum: '국', tteut: '나라', example1: '국가(國家)', example2: '애국(愛國)' },
+            { hanja: '軍', eum: '군', tteut: '군사', example1: '군인(軍人)', example2: '육군(陸軍)' },
+            { hanja: '郡', eum: '군', tteut: '고을', example1: '군수(郡守)', example2: '군청(郡廳)' },
+            { hanja: '君', eum: '군', tteut: '임금', example1: '군주(君主)', example2: '군신(君臣)' },
+            { hanja: '宮', eum: '궁', tteut: '집', example1: '궁전(宮殿)', example2: '왕궁(王宮)' },
+            { hanja: '卷', eum: '권', tteut: '책', example1: '상권(上卷)', example2: '전권(全卷)' },
+            { hanja: '鬼', eum: '귀', tteut: '귀신', example1: '귀신(鬼神)', example2: '아귀(餓鬼)' },
+            { hanja: '貴', eum: '귀', tteut: '귀할', example1: '귀중(貴重)', example2: '고귀(高貴)' },
+            { hanja: '歸', eum: '귀', tteut: '돌아갈', example1: '귀가(歸家)', example2: '복귀(復歸)' },
+            { hanja: '均', eum: '균', tteut: '고를', example1: '평균(平均)', example2: '균형(均衡)' },
+            { hanja: '極', eum: '극', tteut: '다할', example1: '극한(極限)', example2: '극단(極端)' },
+            { hanja: '根', eum: '근', tteut: '뿌리', example1: '근본(根本)', example2: '근거(根據)' },
+            { hanja: '近', eum: '근', tteut: '가까울', example1: '근처(近處)', example2: '최근(最近)' },
+            { hanja: '金', eum: '금', tteut: '쇠', example1: '금속(金屬)', example2: '요금(料金)' },
+            { hanja: '今', eum: '금', tteut: '이제', example1: '지금(只今)', example2: '고금(古今)' },
+            { hanja: '急', eum: '급', tteut: '급할', example1: '급행(急行)', example2: '긴급(緊急)' },
+            { hanja: '級', eum: '급', tteut: '등급', example1: '고급(高級)', example2: '학급(學級)' },
+            { hanja: '器', eum: '기', tteut: '그릇', example1: '악기(樂器)', example2: '식기(食器)' },
+            { hanja: '記', eum: '기', tteut: '기록할', example1: '일기(日記)', example2: '기록(記錄)' },
+            { hanja: '期', eum: '기', tteut: '기약할', example1: '기간(期間)', example2: '학기(學期)' },
+            { hanja: '氣', eum: '기', tteut: '기운', example1: '공기(空氣)', example2: '기분(氣分)' },
+            { hanja: '技', eum: '기', tteut: '재주', example1: '기술(技術)', example2: '경기(競技)' },
+            { hanja: '起', eum: '기', tteut: '일어날', example1: '기립(起立)', example2: '기상(起床)' },
+            { hanja: '基', eum: '기', tteut: '터', example1: '기초(基礎)', example2: '기본(基本)' },
+            { hanja: '吉', eum: '길', tteut: '길할', example1: '길일(吉日)', example2: '대길(大吉)' },
+            // Page 2
+            { hanja: '暖', eum: '난', tteut: '따뜻할', example1: '난방(暖房)', example2: '온난(溫暖)' },
+            { hanja: '難', eum: '난', tteut: '어려울', example1: '곤란(困難)', example2: '난관(難關)' },
+            { hanja: '南', eum: '남', tteut: '남녘', example1: '남쪽(南쪽)', example2: '강남(江南)' },
+            { hanja: '男', eum: '남', tteut: '사내', example1: '남자(男子)', example2: '장남(長男)' },
+            { hanja: '內', eum: '내', tteut: '안', example1: '실내(室內)', example2: '내용(內容)' },
+            { hanja: '女', eum: '녀/여', tteut: '계집', example1: '여자(女子)', example2: '소녀(少女)' },
+            { hanja: '年', eum: '년', tteut: '해', example1: '작년(昨年)', example2: '소년(少年)' },
+            { hanja: '念', eum: '념', tteut: '생각', example1: '기념(紀念)', example2: '개념(槪念)' },
+            { hanja: '努', eum: '노', tteut: '힘쓸', example1: '노력(努力)', example2: '노심초사(勞心焦思)' },
+            { hanja: '怒', eum: '노', tteut: '성낼', example1: '분노(憤怒)', example2: '격노(激怒)' },
+            { hanja: '農', eum: '농', tteut: '농사', example1: '농부(農夫)', example2: '농업(農業)' },
+            { hanja: '能', eum: '능', tteut: '능할', example1: '능력(能力)', example2: '가능(可能)' },
+            { hanja: '多', eum: '다', tteut: '많을', example1: '다수(多數)', example2: '다행(多幸)' },
+            { hanja: '端', eum: '단', tteut: '끝', example1: '극단(極端)', example2: '첨단(尖端)' },
+            { hanja: '短', eum: '단', tteut: '짧을', example1: '장단(長短)', example2: '단점(短點)' },
+            { hanja: '單', eum: '단', tteut: '홑', example1: '단순(單純)', example2: '단독(單獨)' },
+            { hanja: '斷', eum: '단', tteut: '끊을', example1: '중단(中断)', example2: '결단(決斷)' },
+            { hanja: '達', eum: '달', tteut: '통달할', example1: '달성(達成)', example2: '전달(傳達)' },
+            { hanja: '談', eum: '담', tteut: '말씀', example1: '상담(相談)', example2: '회담(會談)' },
+            { hanja: '答', eum: '답', tteut: '대답할', example1: '정답(正答)', example2: '응답(應答)' },
+            { hanja: '當', eum: '당', tteut: '마땅할', example1: '당연(當然)', example2: '담당(擔當)' },
+            { hanja: '堂', eum: '당', tteut: '집', example1: '식당(食堂)', example2: '강당(講堂)' },
+            { hanja: '大', eum: '대', tteut: '클', example1: '대학교(大學校)', example2: '대문(大門)' },
+            { hanja: '待', eum: '대', tteut: '기다릴', example1: '기대(期待)', example2: '대기(待機)' },
+            { hanja: '代', eum: '대', tteut: '대신할', example1: '대표(代表)', example2: '시대(時代)' },
+            { hanja: '對', eum: '대', tteut: '대할', example1: '상대(相對)', example2: '대화(對話)' },
+            { hanja: '德', eum: '덕', tteut: '큰', example1: '덕분(德分)', example2: '도덕(道德)' },
+            { hanja: '圖', eum: '도', tteut: '그림', example1: '지도(地圖)', example2: '도서관(圖書館)' },
+            { hanja: '都', eum: '도', tteut: '도읍', example1: '도시(都市)', example2: '수도(首都)' },
+            { hanja: '島', eum: '도', tteut: '섬', example1: '반도(半島)', example2: '제주도(濟州島)' },
+            { hanja: '刀', eum: '도', tteut: '칼', example1: '단도(短刀)', example2: '면도(面刀)' },
+            { hanja: '道', eum: '도', tteut: '길', example1: '도로(道路)', example2: '인도(人道)' },
+            { hanja: '度', eum: '도', tteut: '법도', example1: '온도(溫度)', example2: '속도(速度)' },
+            { hanja: '到', eum: '도', tteut: '이를', example1: '도착(到着)', example2: '도달(到達)' },
+            { hanja: '讀', eum: '독', tteut: '읽을', example1: '독서(讀書)', example2: '낭독(朗讀)' },
+            { hanja: '同', eum: '동', tteut: '한가지', example1: '동일(同一)', example2: '공동(共同)' },
+            { hanja: '冬', eum: '동', tteut: '겨울', example1: '동지(冬至)', example2: '동계(冬季)' },
+            { hanja: '童', eum: '동', tteut: '아이', example1: '아동(兒童)', example2: '동화(童話)' },
+            { hanja: '動', eum: '동', tteut: '움직일', example1: '운동(運動)', example2: '행동(行動)' },
+            { hanja: '斗', eum: '두', tteut: '말', example1: '북두칠성(北斗七星)', example2: '성두(星斗)' },
+            { hanja: '頭', eum: '두', tteut: '머리', example1: '두통(頭痛)', example2: '선두(先頭)' },
+            { hanja: '豆', eum: '두', tteut: '콩', example1: '두유(豆乳)', example2: '두부(豆腐)' },
+            { hanja: '得', eum: '득', tteut: '얻을', example1: '소득(所得)', example2: '획득(獲得)' },
+            { hanja: '燈', eum: '등', tteut: '등', example1: '전등(電燈)', example2: '신호등(信號燈)' },
+            { hanja: '登', eum: '등', tteut: '오를', example1: '등산(登山)', example2: '등록(登錄)' },
+            { hanja: '等', eum: '등', tteut: '등급', example1: '평등(平等)', example2: '초등학교(初等學校)' },
+            { hanja: '落', eum: '락', tteut: '떨어질', example1: '낙하(落下)', example2: '추락(墜落)' },
+            { hanja: '樂', eum: '락/악/요', tteut: '즐길/음악/좋아할', example1: '오락(娛樂)', example2: '음악(音樂)' },
+            { hanja: '浪', eum: '랑', tteut: '물결', example1: '파랑(波浪)', example2: '낭비(浪費)' },
+            { hanja: '來', eum: '래', tteut: '올', example1: '미래(未來)', example2: '내일(來日)' },
+            { hanja: '冷', eum: '랭', tteut: '찰', example1: '냉수(冷水)', example2: '냉장고(冷藏庫)' },
+            { hanja: '量', eum: '량', tteut: '헤아릴', example1: '수량(數量)', example2: '중량(重量)' },
+            { hanja: '兩', eum: '량', tteut: '두', example1: '양쪽(兩쪽)', example2: '양친(兩親)' },
+            { hanja: '旅', eum: '려', tteut: '나그네', example1: '여행(旅行)', example2: '여관(旅館)' },
+            { hanja: '歷', eum: '력', tteut: '지낼', example1: '역사(歷史)', example2: '이력(履歷)' },
+            { hanja: '力', eum: '력', tteut: '힘', example1: '노력(努力)', example2: '능력(能力)' },
+            { hanja: '聯', eum: '련', tteut: '연이을', example1: '연락(連絡)', example2: '관련(關聯)' },
+            { hanja: '練', eum: '련', tteut: '익힐', example1: '연습(練習)', example2: '훈련(訓練)' },
+            { hanja: '列', eum: '렬', tteut: '벌일', example1: '행렬(行列)', example2: '열차(列車)' },
+            { hanja: '領', eum: '령', tteut: '거느릴', example1: '대통령(大統領)', example2: '영토(領土)' },
+            { hanja: '令', eum: '령', tteut: '하여금', example1: '명령(命令)', example2: '법령(法令)' },
+            { hanja: '禮', eum: '례', tteut: '예도', example1: '예절(禮節)', example2: '실례(失禮)' },
+            { hanja: '勞', eum: '로', tteut: '일할', example1: '노동(勞動)', example2: '피로(疲勞)' },
+            { hanja: '路', eum: '로', tteut: '길', example1: '도로(道路)', example2: '진로(進路)' },
+            { hanja: '老', eum: '로', tteut: '늙을', example1: '노인(老人)', example2: '경로(敬老)' },
+            { hanja: '綠', eum: '록', tteut: '푸를', example1: '녹색(綠色)', example2: '초록(草綠)' },
+            { hanja: '論', eum: '론', tteut: '말할', example1: '논리(論理)', example2: '토론(討論)' },
+            { hanja: '料', eum: '료', tteut: '헤아릴', example1: '요금(料金)', example2: '재료(材料)' },
+            { hanja: '留', eum: '류', tteut: '머무를', example1: '유학(留學)', example2: '보류(保留)' },
+            { hanja: '流', eum: '류', tteut: '흐를', example1: '교류(交流)', example2: '유행(流行)' },
+            { hanja: '陸', eum: '륙', tteut: '뭍', example1: '대륙(大陸)', example2: '상륙(上陸)' },
+            { hanja: '倫', eum: '륜', tteut: '인륜', example1: '윤리(倫理)', example2: '불륜(不倫)' },
+            { hanja: '律', eum: '률', tteut: '법', example1: '법률(法律)', example2: '규율(規律)' },
+            { hanja: '里', eum: '리', tteut: '마을', example1: '동리(洞里)', example2: '이장(里長)' },
+            { hanja: '利', eum: '리', tteut: '이로울', example1: '이익(利益)', example2: '권리(權利)' },
+            { hanja: '林', eum: '림', tteut: '수풀', example1: '산림(山林)', example2: '임업(林業)' },
+            { hanja: '臨', eum: '림', tteut: '임할', example1: '임시(臨時)', example2: '강림(降臨)' },
+            { hanja: '立', eum: '립', tteut: '설', example1: '독립(獨立)', example2: '설립(設立)' },
+            { hanja: '馬', eum: '마', tteut: '말', example1: '경마(競馬)', example2: '마차(馬車)' },
+            { hanja: '萬', eum: '만', tteut: '일만', example1: '만년(萬年)', example2: '백만(百萬)' },
+            { hanja: '末', eum: '말', tteut: '끝', example1: '주말(週末)', example2: '연말(年末)' },
+            { hanja: '亡', eum: '망', tteut: '망할', example1: '사망(死亡)', example2: '멸망(滅亡)' },
+            { hanja: '忘', eum: '망', tteut: '잊을', example1: '망각(忘却)', example2: '비망록(備忘錄)' },
+            { hanja: '買', eum: '매', tteut: '살', example1: '매매(賣買)', example2: '구매(購買)' },
+            { hanja: '賣', eum: '매', tteut: '팔', example1: '판매(販賣)', example2: '매점(賣店)' },
+            { hanja: '面', eum: '면', tteut: '낯', example1: '세면(洗面)', example2: '방면(方面)' },
+            { hanja: '免', eum: '면', tteut: '면할', example1: '면제(免除)', example2: '면세(免稅)' },
+            { hanja: '明', eum: '명', tteut: '밝을', example1: '명백(明白)', example2: '설명(說明)' },
+            { hanja: '鳴', eum: '명', tteut: '울', example1: '비명(悲鳴)', example2: '공명(共鳴)' },
+            { hanja: '名', eum: '명', tteut: '이름', example1: '성명(姓名)', example2: '유명(有名)' },
+            { hanja: '命', eum: '명', tteut: '목숨', example1: '생명(生命)', example2: '운명(運命)' },
+            { hanja: '毛', eum: '모', tteut: '털', example1: '모발(毛髮)', example2: '양모(羊毛)' },
+            { hanja: '母', eum: '모', tteut: '어미', example1: '부모(父母)', example2: '모교(母校)' },
+            { hanja: '木', eum: '목', tteut: '나무', example1: '목재(木材)', example2: '수목(樹木)' },
+            { hanja: '目', eum: '목', tteut: '눈', example1: '과목(科目)', example2: '목표(目標)' },
+            { hanja: '夢', eum: '몽', tteut: '꿈', example1: '악몽(惡夢)', example2: '몽상(夢想)' },
+            { hanja: '務', eum: '무', tteut: '힘쓸', example1: '업무(業務)', example2: '의무(義務)' },
+            { hanja: '無', eum: '무', tteut: '없을', example1: '무료(無料)', example2: '무시(無視)' },
+            // Page 3
+            { hanja: '電', eum: '전', tteut: '번개', example1: '전화(電話)', example2: '전기(電氣)' },
+            { hanja: '典', eum: '전', tteut: '법', example1: '사전(辭典)', example2: '고전(古典)' },
+            { hanja: '戰', eum: '전', tteut: '싸움', example1: '전쟁(戰爭)', example2: '도전(挑戰)' },
+            { hanja: '展', eum: '전', tteut: '펼', example1: '전시(展示)', example2: '발전(發展)' },
+            { hanja: '絶', eum: '절', tteut: '끊을', example1: '절대(絕對)', example2: '단절(斷絶)' },
+            { hanja: '節', eum: '절', tteut: '마디', example1: '계절(季節)', example2: '명절(名節)' },
+            { hanja: '切', eum: '절', tteut: '끊을', example1: '친절(親切)', example2: '절단(切斷)' },
+            { hanja: '店', eum: '점', tteut: '가게', example1: '서점(書店)', example2: '상점(商店)' },
+            { hanja: '接', eum: '접', tteut: '이을', example1: '접촉(接觸)', example2: '면접(面接)' },
+            { hanja: '貞', eum: '정', tteut: '곧을', example1: '정숙(貞淑)', example2: '정절(貞節)' },
+            { hanja: '程', eum: '정', tteut: '길', example1: '과정(課程)', example2: '정도(程度)' },
+            { hanja: '情', eum: '정', tteut: '뜻', example1: '감정(感情)', example2: '우정(友情)' },
+            { hanja: '停', eum: '정', tteut: '머무를', example1: '정지(停止)', example2: '정전(停電)' },
+            { hanja: '政', eum: '정', tteut: '정사', example1: '정치(政治)', example2: '정부(政府)' },
+            { hanja: '頂', eum: '정', tteut: '정수리', example1: '정상(頂上)', example2: '정점(頂點)' },
+            { hanja: '精', eum: '정', tteut: '정할', example1: '정신(精神)', example2: '정밀(精密)' },
+            { hanja: '正', eum: '정', tteut: '바를', example1: '정확(正確)', example2: '정의(正義)' },
+            { hanja: '定', eum: '정', tteut: '정할', example1: '결정(決定)', example2: '안정(安定)' },
+            { hanja: '提', eum: '제', tteut: '끌', example1: '제출(提出)', example2: '제안(提案)' },
+            { hanja: '除', eum: '제', tteut: '덜', example1: '제외(除外)', example2: '삭제(削除)' },
+            { hanja: '題', eum: '제', tteut: '제목', example1: '문제(問題)', example2: '과제(課題)' },
+            { hanja: '弟', eum: '제', tteut: '아우', example1: '형제(兄弟)', example2: '제자(弟子)' },
+            { hanja: '際', eum: '제', tteut: '즈음', example1: '국제(國際)', example2: '실제(實際)' },
+            { hanja: '制', eum: '제', tteut: '마를', example1: '제도(制度)', example2: '통제(統制)' },
+            { hanja: '第', eum: '제', tteut: '차례', example1: '제일(第一)', example2: '급제(及第)' },
+            { hanja: '調', eum: '조', tteut: '고를', example1: '조절(調節)', example2: '강조(強調)' },
+            { hanja: '鳥', eum: '조', tteut: '새', example1: '조류(鳥類)', example2: '백조(白鳥)' },
+            { hanja: '朝', eum: '조', tteut: '아침', example1: '조선(朝鮮)', example2: '조회(朝會)' },
+            { hanja: '祖', eum: '조', tteut: '할아비', example1: '조상(祖上)', example2: '조국(祖國)' },
+            { hanja: '助', eum: '조', tteut: '도울', example1: '조수(助手)', example2: '원조(援助)' },
+            { hanja: '早', eum: '조', tteut: '이를', example1: '조기(早期)', example2: '조조(早朝)' },
+            { hanja: '造', eum: '조', tteut: '지을', example1: '제조(製造)', example2: '창조(創造)' },
+            { hanja: '足', eum: '족', tteut: '발', example1: '만족(滿足)', example2: '부족(不足)' },
+            { hanja: '尊', eum: '존', tteut: '높을', example1: '존경(尊敬)', example2: '자존심(自尊心)' },
+            { hanja: '存', eum: '존', tteut: '있을', example1: '존재(存在)', example2: '보존(保存)' },
+            { hanja: '宗', eum: '종', tteut: '마루', example1: '종교(宗敎)', example2: '종가(宗家)' },
+            { hanja: '終', eum: '종', tteut: '마칠', example1: '최종(最終)', example2: '종료(終了)' },
+            { hanja: '種', eum: '종', tteut: '씨', example1: '종류(種類)', example2: '품종(品種)' },
+            { hanja: '從', eum: '종', tteut: '좇을', example1: '복종(服從)', example2: '종사(從事)' },
+            { hanja: '坐', eum: '좌', tteut: '앉을', example1: '좌석(坐席)', example2: '좌우(左右)' },
+            { hanja: '左', eum: '좌', tteut: '왼', example1: '좌회전(左回轉)', example2: '좌측(左側)' },
+            { hanja: '罪', eum: '죄', tteut: '허물', example1: '죄인(罪人)', example2: '범죄(犯罪)' },
+            { hanja: '州', eum: '주', tteut: '고을', example1: '광주(光州)', example2: '미주(美洲)' },
+            { hanja: '走', eum: '주', tteut: '달릴', example1: '주행(走行)', example2: '질주(疾走)' },
+            { hanja: '朱', eum: '주', tteut: '붉을', example1: '주홍(朱紅)', example2: '주사(朱砂)' },
+            { hanja: '主', eum: '주', tteut: '주인', example1: '주인공(主人公)', example2: '주요(主要)' },
+            { hanja: '住', eum: '주', tteut: '살', example1: '주소(住所)', example2: '거주(居住)' },
+            { hanja: '注', eum: '주', tteut: '물댈', example1: '주의(注意)', example2: '주문(注文)' },
+            { hanja: '酒', eum: '주', tteut: '술', example1: '음주(飮酒)', example2: '주점(酒店)' },
+            { hanja: '竹', eum: '죽', tteut: '대', example1: '죽순(竹筍)', example2: '대나무' },
+            { hanja: '準', eum: '준', tteut: '준할', example1: '준비(準備)', example2: '수준(水準)' },
+            { hanja: '中', eum: '중', tteut: '가운데', example1: '중심(中心)', example2: '중학교(中學校)' },
+            { hanja: '重', eum: '중', tteut: '무거울', example1: '중요(重要)', example2: '체중(體重)' },
+            { hanja: '衆', eum: '중', tteut: '무리', example1: '대중(大衆)', example2: '군중(群衆)' },
+            { hanja: '增', eum: '증', tteut: '더할', example1: '증가(增加)', example2: '증진(增進)' },
+            { hanja: '止', eum: '지', tteut: '그칠', example1: '중지(中止)', example2: '금지(禁止)' },
+            { hanja: '誌', eum: '지', tteut: '기록할', example1: '잡지(雜誌)', example2: '일지(日誌)' },
+            { hanja: '地', eum: '지', tteut: '땅', example1: '지도(地圖)', example2: '지하(地下)' },
+            { hanja: '志', eum: '지', tteut: '뜻', example1: '의지(意志)', example2: '지원(志願)' },
+            { hanja: '池', eum: '지', tteut: '못', example1: '연지(蓮池)', example2: '저수지(貯水池)' },
+            { hanja: '知', eum: '지', tteut: '알', example1: '지식(知識)', example2: '통지(通知)' },
+            { hanja: '至', eum: '지', tteut: '이를', example1: '지극(至極)', example2: '동지(冬至)' },
+            { hanja: '紙', eum: '지', tteut: '종이', example1: '편지(便紙)', example2: '휴지(休紙)' },
+            { hanja: '支', eum: '지', tteut: '지탱할', example1: '지지(支持)', example2: '지점(支店)' },
+            { hanja: '智', eum: '지', tteut: '지혜', example1: '지혜(智慧)', example2: '지능(知能)' },
+            { hanja: '直', eum: '직', tteut: '곧을', example1: '직선(直線)', example2: '정직(正直)' },
+            { hanja: '眞', eum: '진', tteut: '참', example1: '진실(眞實)', example2: '사진(寫眞)' },
+            { hanja: '進', eum: '진', tteut: '나아갈', example1: '전진(前進)', example2: '진보(進步)' },
+            { hanja: '質', eum: '질', tteut: '바탕', example1: '질문(質問)', example2: '품질(品質)' },
+            { hanja: '疾', eum: '질', tteut: '병', example1: '질병(疾病)', example2: '질주(疾走)' },
+            { hanja: '秩', eum: '질', tteut: '차례', example1: '질서(秩序)', example2: '안녕질서(安寧秩序)' },
+            { hanja: '集', eum: '집', tteut: '모을', example1: '집합(集合)', example2: '집중(集中)' },
+            { hanja: '次', eum: '차', tteut: '버금', example1: '차례(次例)', example2: '목차(目次)' },
+            { hanja: '着', eum: '착', tteut: '붙을', example1: '도착(到着)', example2: '착석(着席)' },
+            { hanja: '察', eum: '찰', tteut: '살필', example1: '경찰(警察)', example2: '관찰(觀察)' },
+            { hanja: '參', eum: '참', tteut: '참여할', example1: '참가(參加)', example2: '참고(參考)' },
+            { hanja: '唱', eum: '창', tteut: '부를', example1: '합창(合唱)', example2: '제창(齊唱)' },
+            { hanja: '創', eum: '창', tteut: '비롯할', example1: '창조(創造)', example2: '창립(創立)' },
+            { hanja: '責', eum: '책', tteut: '꾸짖을', example1: '책임(責任)', example2: '문책(問責)' },
+            { hanja: '處', eum: '처', tteut: '곳', example1: '대처(對處)', example2: '처리(處理)' },
+            { hanja: '川', eum: '천', tteut: '내', example1: '하천(河川)', example2: '산천(山川)' },
+            { hanja: '千', eum: '천', tteut: '일천', example1: '천만(千萬)', example2: '수천(數千)' },
+            { hanja: '天', eum: '천', tteut: '하늘', example1: '천국(天國)', example2: '천재(天才)' },
+            { hanja: '鐵', eum: '철', tteut: '쇠', example1: '철도(鐵道)', example2: '지하철(地下鐵)' },
+            { hanja: '淸', eum: '청', tteut: '맑을', example1: '청소(淸掃)', example2: '청결(淸潔)' },
+            { hanja: '請', eum: '청', tteut: '청할', example1: '요청(要請)', example2: '신청(申請)' },
+            { hanja: '靑', eum: '청', tteut: '푸를', example1: '청년(靑年)', example2: '청춘(靑春)' },
+            { hanja: '體', eum: '체', tteut: '몸', example1: '체육(體育)', example2: '신체(身體)' },
+            { hanja: '初', eum: '초', tteut: '처음', example1: '최초(最初)', example2: '초보(初步)' },
+            { hanja: '草', eum: '초', tteut: '풀', example1: '초원(草原)', example2: '잡초(雜草)' },
+            { hanja: '寸', eum: '촌', tteut: '마디', example1: '촌수(寸數)', example2: '삼촌(三寸)' },
+            { hanja: '村', eum: '촌', tteut: '마을', example1: '농촌(農村)', example2: '어촌(漁村)' },
+            { hanja: '最', eum: '최', tteut: '가장', example1: '최고(最高)', example2: '최신(最新)' },
+            { hanja: '秋', eum: '추', tteut: '가을', example1: '추석(秋夕)', example2: '만추(晩秋)' },
+            { hanja: '祝', eum: '축', tteut: '빌', example1: '축하(祝賀)', example2: '축복(祝福)' },
+            { hanja: '春', eum: '춘', tteut: '봄', example1: '춘분(春分)', example2: '청춘(靑春)' },
+            { hanja: '出', eum: '출', tteut: '날', example1: '출발(出發)', example2: '외출(外出)' },
+            { hanja: '蟲', eum: '충', tteut: '벌레', example1: '해충(害蟲)', example2: '곤충(昆蟲)' },
+            { hanja: '充', eum: '충', tteut: '채울', example1: '충분(充分)', example2: '보충(補充)' },
+            { hanja: '忠', eum: '충', tteut: '충성', example1: '충성(忠誠)', example2: '충신(忠臣)' },
+            { hanja: '取', eum: '취', tteut: '가질', example1: '취소(取消)', example2: '취득(取得)' },
+            // Page 4
+            { hanja: '葉', eum: '엽', tteut: '잎', example1: '낙엽(落葉)', example2: '홍엽(紅葉)' },
+            { hanja: '英', eum: '영', tteut: '꽃부리', example1: '영국(英國)', example2: '영어(英語)' },
+            { hanja: '榮', eum: '영', tteut: '영화', example1: '영광(榮光)', example2: '번영(繁榮)' },
+            { hanja: '永', eum: '영', tteut: '길', example1: '영원(永遠)', example2: '영구(永久)' },
+            { hanja: '藝', eum: '예', tteut: '재주', example1: '예술(藝術)', example2: '문예(文藝)' },
+            { hanja: '誤', eum: '오', tteut: '그르칠', example1: '오해(誤解)', example2: '착오(錯誤)' },
+            { hanja: '悟', eum: '오', tteut: '깨달을', example1: '각오(覺悟)', example2: '오도(悟道)' },
+            { hanja: '午', eum: '오', tteut: '낮', example1: '오전(午前)', example2: '정오(正午)' },
+            { hanja: '五', eum: '오', tteut: '다섯', example1: '오월(五月)', example2: '오색(五色)' },
+            { hanja: '玉', eum: '옥', tteut: '구슬', example1: '옥석(玉石)', example2: '귀옥(貴玉)' },
+            { hanja: '屋', eum: '옥', tteut: '집', example1: '가옥(家屋)', example2: '옥상(屋上)' },
+            { hanja: '溫', eum: '온', tteut: '따뜻할', example1: '온도(溫度)', example2: '온천(溫泉)' },
+            { hanja: '臥', eum: '와', tteut: '누울', example1: '와병(臥病)', example2: '좌와(坐臥)' },
+            { hanja: '完', eum: '완', tteut: '완전할', example1: '완성(完成)', example2: '완전(完全)' },
+            { hanja: '王', eum: '왕', tteut: '임금', example1: '왕국(王國)', example2: '여왕(女王)' },
+            { hanja: '往', eum: '왕', tteut: '갈', example1: '왕복(往復)', example2: '과왕(過往)' },
+            { hanja: '外', eum: '외', tteut: '밖', example1: '외국(外國)', example2: '외출(外出)' },
+            { hanja: '要', eum: '요', tteut: '구할', example1: '요구(要求)', example2: '중요(重要)' },
+            { hanja: '浴', eum: '욕', tteut: '목욕할', example1: '목욕(沐浴)', example2: '욕실(浴室)' },
+            { hanja: '窓', eum: '창', tteut: '창', example1: '창문(窓門)', example2: '동창(同窓)' },
+            { hanja: '勇', eum: '용', tteut: '날랠', example1: '용기(勇氣)', example2: '용감(勇敢)' },
+            { hanja: '容', eum: '용', tteut: '얼굴', example1: '내용(內容)', example2: '용서(容恕)' },
+            { hanja: '用', eum: '용', tteut: '쓸', example1: '사용(使用)', example2: '용돈(用돈)' },
+            { hanja: '牛', eum: '우', tteut: '소', example1: '우유(牛乳)', example2: '한우(韓牛)' },
+            { hanja: '友', eum: '우', tteut: '벗', example1: '친구(親舊)', example2: '우정(友情)' },
+            { hanja: '雨', eum: '우', tteut: '비', example1: '우산(雨傘)', example2: '폭우(暴雨)' },
+            { hanja: '右', eum: '우', tteut: '오른', example1: '우회전(右回轉)', example2: '좌우(左右)' },
+            { hanja: '雲', eum: '운', tteut: '구름', example1: '운집(雲集)', example2: '풍운(風雲)' },
+            { hanja: '運', eum: '운', tteut: '옮길', example1: '운동(運動)', example2: '운명(運命)' },
+            { hanja: '雄', eum: '웅', tteut: '수컷', example1: '영웅(英雄)', example2: '웅장(雄壯)' },
+            { hanja: '園', eum: '원', tteut: '동산', example1: '공원(公園)', example2: '유치원(幼稚園)' },
+            { hanja: '原', eum: '원', tteut: '근원', example1: '원인(原因)', example2: '원래(原來)' },
+            { hanja: '元', eum: '원', tteut: '으뜸', example1: '원조(元祖)', example2: '기원(紀元)' },
+            { hanja: '遠', eum: '원', tteut: '멀', example1: '원근(遠近)', example2: '망원경(望遠鏡)' },
+            { hanja: '願', eum: '원', tteut: '원할', example1: '소원(所願)', example2: '자원(自願)' },
+            { hanja: '月', eum: '월', tteut: '달', example1: '일월(日月)', example2: '세월(歲月)' },
+            { hanja: '位', eum: '위', tteut: '자리', example1: '위치(位置)', example2: '지위(地位)' },
+            { hanja: '危', eum: '위', tteut: '위태할', example1: '위험(危險)', example2: '위기(危機)' },
+            { hanja: '爲', eum: '위', tteut: '할', example1: '행위(行爲)', example2: '인위(人爲)' },
+            { hanja: '油', eum: '유', tteut: '기름', example1: '석유(石油)', example2: '주유소(注油所)' },
+            { hanja: '遊', eum: '유', tteut: '놀', example1: '유원지(遊園地)', example2: '유희(遊戱)' },
+            { hanja: '由', eum: '유', tteut: '말미암을', example1: '이유(理由)', example2: '자유(自由)' },
+            { hanja: '幼', eum: '유', tteut: '어릴', example1: '유치원(幼稚園)', example2: '유아(幼兒)' },
+            { hanja: '有', eum: '유', tteut: '있을', example1: '유명(有名)', example2: '소유(所有)' },
+            { hanja: '肉', eum: '육', tteut: '고기', example1: '육체(肉體)', example2: '정육점(精肉店)' },
+            { hanja: '育', eum: '육', tteut: '기를', example1: '교육(敎育)', example2: '체육(體育)' },
+            { hanja: '銀', eum: '은', tteut: '은', example1: '은행(銀行)', example2: '은메달' },
+            { hanja: '恩', eum: '은', tteut: '은혜', example1: '은혜(恩惠)', example2: '은인(恩人)' },
+            { hanja: '陰', eum: '음', tteut: '그늘', example1: '음지(陰地)', example2: '음모(陰謀)' },
+            { hanja: '音', eum: '음', tteut: '소리', example1: '음악(音樂)', example2: '발음(發音)' },
+            { hanja: '飮', eum: '음', tteut: '마실', example1: '음료수(飮料水)', example2: '음주(飮酒)' },
+            { hanja: '泣', eum: '읍', tteut: '울', example1: '읍소(泣訴)', example2: '곡읍(哭泣)' },
+            { hanja: '應', eum: '응', tteut: '응할', example1: '응답(應答)', example2: '반응(反應)' },
+            { hanja: '儀', eum: '의', tteut: '거동', example1: '의식(儀式)', example2: '예의(禮儀)' },
+            { hanja: '衣', eum: '의', tteut: '옷', example1: '의복(衣服)', example2: '의류(衣類)' },
+            { hanja: '議', eum: '의', tteut: '의논할', example1: '회의(會議)', example2: '의논(議論)' },
+            { hanja: '疑', eum: '의', tteut: '의심할', example1: '의심(疑心)', example2: '의문(疑問)' },
+            { hanja: '醫', eum: '의', tteut: '의원', example1: '의사(醫師)', example2: '의학(醫學)' },
+            { hanja: '意', eum: '의', tteut: '뜻', example1: '의미(意味)', example2: '의견(意見)' },
+            { hanja: '義', eum: '의', tteut: '옳을', example1: '의리(義理)', example2: '정의(正義)' },
+            { hanja: '移', eum: '이', tteut: '옮길', example1: '이동(移動)', example2: '이사(移徙)' },
+            { hanja: '耳', eum: '이', tteut: '귀', example1: '이목(耳目)', example2: '이비인후과(耳鼻咽喉科)' },
+            { hanja: '異', eum: '이', tteut: '다를', example1: '이상(異常)', example2: '특이(特異)' },
+            { hanja: '二', eum: '이', tteut: '두', example1: '이월(二月)', example2: '이등(二等)' },
+            { hanja: '以', eum: '이', tteut: '써', example1: '이상(以上)', example2: '이내(以內)' },
+            { hanja: '益', eum: '익', tteut: '더할', example1: '이익(利益)', example2: '수익(收益)' },
+            { hanja: '印', eum: '인', tteut: '도장', example1: '인쇄(印刷)', example2: '인상(印象)' },
+            { hanja: '依', eum: '의', tteut: '의지할', example1: '의지(依支)', example2: '의존(依存)' },
+            { hanja: '認', eum: '인', tteut: '알', example1: '인정(認定)', example2: '확인(確認)' },
+            { hanja: '仁', eum: '인', tteut: '어질', example1: '인천(仁川)', example2: '인자(仁慈)' },
+            { hanja: '因', eum: '인', tteut: '인할', example1: '원인(原因)', example2: '요인(要因)' },
+            { hanja: '忍', eum: '인', tteut: '참을', example1: '인내(忍耐)', example2: '잔인(殘忍)' },
+            { hanja: '日', eum: '일', tteut: '날', example1: '매일(每日)', example2: '생일(生日)' },
+            { hanja: '一', eum: '일', tteut: '한', example1: '통일(統一)', example2: '일등(一等)' },
+            { hanja: '任', eum: '임', tteut: '맡길', example1: '책임(責任)', example2: '임무(任務)' },
+            { hanja: '入', eum: '입', tteut: '들', example1: '입구(入口)', example2: '입학(入學)' },
+            { hanja: '字', eum: '자', tteut: '글자', example1: '한자(漢字)', example2: '숫자(數字)' },
+            { hanja: '者', eum: '자', tteut: '사람', example1: '학자(學者)', example2: '노약자(老弱者)' },
+            { hanja: '自', eum: '자', tteut: '스스로', example1: '자신(自身)', example2: '자연(自然)' },
+            { hanja: '作', eum: '작', tteut: '지을', example1: '작품(作品)', example2: '조작(操作)' },
+            { hanja: '章', eum: '장', tteut: '글', example1: '문장(文章)', example2: '훈장(勳章)' },
+            { hanja: '場', eum: '장', tteut: '마당', example1: '운동장(運動場)', example2: '장소(場所)' },
+            { hanja: '將', eum: '장', tteut: '장수', example1: '장군(將軍)', example2: '장래(將來)' },
+            { hanja: '材', eum: '재', tteut: '재목', example1: '재료(材料)', example2: '인재(人材)' },
+            { hanja: '財', eum: '재', tteut: '재물', example1: '재산(財産)', example2: '재벌(財閥)' },
+            { hanja: '災', eum: '재', tteut: '재앙', example1: '재해(災害)', example2: '화재(火災)' },
+            { hanja: '才', eum: '재', tteut: '재주', example1: '재능(才能)', example2: '천재(天才)' },
+            { hanja: '再', eum: '재', tteut: '두', example1: '재회(再會)', example2: '재생(再生)' },
+            { hanja: '在', eum: '재', tteut: '있을', example1: '현재(現在)', example2: '존재(存在)' },
+            { hanja: '爭', eum: '쟁', tteut: '다툴', example1: '경쟁(競爭)', example2: '전쟁(戰爭)' },
+            { hanja: '著', eum: '저', tteut: '나타날', example1: '저서(著書)', example2: '유명(有名)하다' },
+            { hanja: '低', eum: '저', tteut: '낮을', example1: '저가(低價)', example2: '최저(最低)' },
+            { hanja: '貯', eum: '저', tteut: '쌓을', example1: '저축(貯蓄)', example2: '저장(貯藏)' },
+            { hanja: '的', eum: '적', tteut: '과녁', example1: '목적(目的)', example2: '적중(的中)' },
+            { hanja: '適', eum: '적', tteut: '맞을', example1: '적당(適當)', example2: '최적(最適)' },
+            { hanja: '赤', eum: '적', tteut: '붉을', example1: '적색(赤色)', example2: '적십자(赤十字)' },
+            { hanja: '田', eum: '전', tteut: '밭', example1: '염전(鹽田)', example2: '유전(油田)' },
+            { hanja: '前', eum: '전', tteut: '앞', example1: '오전(午前)', example2: '정문(正門) 앞' },
+            { hanja: '全', eum: '전', tteut: '온전할', example1: '전부(全部)', example2: '안전(安全)' },
+            { hanja: '傳', eum: '전', tteut: '전할', example1: '전통(傳統)', example2: '전설(傳說)' },
+            // Page 5
+            { hanja: '文', eum: '문', tteut: '글월', example1: '문자(文字)', example2: '문화(文化)' },
+            { hanja: '門', eum: '문', tteut: '문', example1: '정문(正門)', example2: '입문(入門)' },
+            { hanja: '問', eum: '문', tteut: '물을', example1: '질문(質問)', example2: '문제(問題)' },
+            { hanja: '聞', eum: '문', tteut: '들을', example1: '신문(新聞)', example2: '소문(所聞)' },
+            { hanja: '物', eum: '물', tteut: '만물', example1: '물건(物件)', example2: '동물(動物)' },
+            { hanja: '味', eum: '미', tteut: '맛', example1: '의미(意味)', example2: '미각(味覺)' },
+            { hanja: '米', eum: '미', tteut: '쌀', example1: '백미(白米)', example2: '미국(美國)' },
+            { hanja: '美', eum: '미', tteut: '아름다울', example1: '미술(美術)', example2: '미인(美人)' },
+            { hanja: '未', eum: '미', tteut: '아닐', example1: '미래(未來)', example2: '미정(未定)' },
+            { hanja: '民', eum: '민', tteut: '백성', example1: '국민(國民)', example2: '민주(民主)' },
+            { hanja: '密', eum: '밀', tteut: '빽빽할', example1: '비밀(秘密)', example2: '정밀(精密)' },
+            { hanja: '博', eum: '박', tteut: '넓을', example1: '박사(博士)', example2: '박물관(博物館)' },
+            { hanja: '朴', eum: '박', tteut: '성씨', example1: '소박(素朴)', example2: '순박(淳朴)' },
+            { hanja: '反', eum: '반', tteut: '돌이킬', example1: '반대(反對)', example2: '반복(反復)' },
+            { hanja: '半', eum: '반', tteut: '반', example1: '절반(折半)', example2: '반도(半島)' },
+            { hanja: '發', eum: '발', tteut: '필', example1: '출발(出發)', example2: '발견(發見)' },
+            { hanja: '防', eum: '방', tteut: '막을', example1: '예방(豫防)', example2: '국방(國防)' },
+            { hanja: '房', eum: '방', tteut: '방', example1: '서방(書房)', example2: '난방(暖房)' },
+            { hanja: '放', eum: '방', tteut: '놓을', example1: '방송(放送)', example2: '개방(開放)' },
+            { hanja: '訪', eum: '방', tteut: '찾을', example1: '방문(訪問)', example2: '내방(來訪)' },
+            { hanja: '拜', eum: '배', tteut: '절', example1: '경배(敬拜)', example2: '참배(參拜)' },
+            { hanja: '百', eum: '백', tteut: '일백', example1: '백성(百姓)', example2: '백과사전(百科事典)' },
+            { hanja: '白', eum: '백', tteut: '흰', example1: '백색(白色)', example2: '고백(告白)' },
+            { hanja: '番', eum: '번', tteut: '차례', example1: '순번(順番)', example2: '당번(當番)' },
+            { hanja: '伐', eum: '벌', tteut: '칠', example1: '정벌(征伐)', example2: '벌목(伐木)' },
+            { hanja: '法', eum: '법', tteut: '법', example1: '방법(方法)', example2: '법률(法律)' },
+            { hanja: '變', eum: '변', tteut: '변할', example1: '변화(變化)', example2: '변경(變更)' },
+            { hanja: '別', eum: '별', tteut: '다를', example1: '특별(特別)', example2: '구별(區別)' },
+            { hanja: '兵', eum: '병', tteut: '군사', example1: '병사(兵士)', example2: '징병(徵兵)' },
+            { hanja: '病', eum: '병', tteut: '병', example1: '질병(疾病)', example2: '병원(病院)' },
+            { hanja: '報', eum: '보', tteut: '갚을', example1: '정보(情報)', example2: '보고(報告)' },
+            { hanja: '步', eum: '보', tteut: '걸음', example1: '보행(步行)', example2: '진보(進步)' },
+            { hanja: '保', eum: '보', tteut: '지킬', example1: '보호(保護)', example2: '보존(保存)' },
+            { hanja: '服', eum: '복', tteut: '옷', example1: '의복(衣服)', example2: '교복(校服)' },
+            { hanja: '福', eum: '복', tteut: '복', example1: '행복(幸福)', example2: '축복(祝福)' },
+            { hanja: '本', eum: '본', tteut: '근본', example1: '기본(基本)', example2: '일본(日本)' },
+            { hanja: '奉', eum: '봉', tteut: '받들', example1: '봉사(奉仕)', example2: '신봉(信奉)' },
+            { hanja: '婦', eum: '부', tteut: '아내', example1: '부부(夫婦)', example2: '주부(主婦)' },
+            { hanja: '父', eum: '부', tteut: '아버지', example1: '부모(父母)', example2: '조부(祖父)' },
+            { hanja: '夫', eum: '부', tteut: '지아비', example1: '부부(夫婦)', example2: '남편(男便)' },
+            { hanja: '府', eum: '부', tteut: '마을', example1: '정부(政府)', example2: '도부(都府)' },
+            { hanja: '富', eum: '부', tteut: '부유할', example1: '부자(富者)', example2: '풍부(豊富)' },
+            { hanja: '部', eum: '부', tteut: '나눌', example1: '부분(部分)', example2: '부서(部署)' },
+            { hanja: '不', eum: '불/부', tteut: '아니', example1: '부족(不足)', example2: '불안(不安)' },
+            { hanja: '飛', eum: '비', tteut: '날', example1: '비행기(飛行機)', example2: '비상(飛上)' },
+            { hanja: '備', eum: '비', tteut: '갖출', example1: '준비(準備)', example2: '예비(豫備)' },
+            { hanja: '比', eum: '비', tteut: '견줄', example1: '비교(比較)', example2: '비율(比率)' },
+            { hanja: '悲', eum: '비', tteut: '슬플', example1: '비극(悲劇)', example2: '슬픔(悲)' },
+            { hanja: '費', eum: '비', tteut: '쓸', example1: '소비(消費)', example2: '비용(費用)' },
+            { hanja: '非', eum: '비', tteut: '아닐', example1: '비상(非常)', example2: '비공개(非公開)' },
+            { hanja: '鼻', eum: '비', tteut: '코', example1: '이비인후과(耳鼻咽喉科)', example2: '비음(鼻音)' },
+            { hanja: '貧', eum: '빈', tteut: '가난할', example1: '빈곤(貧困)', example2: '빈부(貧富)' },
+            { hanja: '氷', eum: '빙', tteut: '얼음', example1: '빙산(氷山)', example2: '빙수(氷水)' },
+            { hanja: '社', eum: '사', tteut: '모일', example1: '회사(會社)', example2: '사회(社會)' },
+            { hanja: '私', eum: '사', tteut: '사사', example1: '사립(私立)', example2: '사생활(私生活)' },
+            { hanja: '思', eum: '사', tteut: '생각', example1: '사고(思考)', example2: '사상(思想)' },
+            { hanja: '師', eum: '사', tteut: '스승', example1: '교사(敎師)', example2: '의사(醫師)' },
+            { hanja: '寺', eum: '사', tteut: '절', example1: '사찰(寺刹)', example2: '불국사(佛國寺)' },
+            { hanja: '査', eum: '사', tteut: '조사할', example1: '조사(調査)', example2: '검사(檢査)' },
+            { hanja: '四', eum: '사', tteut: '넉', example1: '사월(四月)', example2: '사방(四方)' },
+            { hanja: '仕', eum: '사', tteut: '벼슬', example1: '봉사(奉仕)', example2: '출사(出仕)' },
+            { hanja: '謝', eum: '사', tteut: '사례할', example1: '감사(感謝)', example2: '사과(謝過)' },
+            { hanja: '士', eum: '사', tteut: '선비', example1: '박사(博士)', example2: '병사(兵士)' },
+            { hanja: '史', eum: '사', tteut: '역사', example1: '역사(歷史)', example2: '국사(國史)' },
+            { hanja: '事', eum: '사', tteut: '일', example1: '사건(事件)', example2: '사실(事實)' },
+            { hanja: '死', eum: '사', tteut: '죽을', example1: '사망(死亡)', example2: '생사(生死)' },
+            { hanja: '使', eum: '사', tteut: '하여금', example1: '사용(使用)', example2: '대사(大使)' },
+            { hanja: '山', eum: '산', tteut: '뫼', example1: '등산(登山)', example2: '산림(山林)' },
+            { hanja: '産', eum: '산', tteut: '낳을', example1: '생산(生産)', example2: '재산(財産)' },
+            { hanja: '算', eum: '산', tteut: '셈', example1: '계산(計算)', example2: '산수(算數)' },
+            { hanja: '殺', eum: '살', tteut: '죽일', example1: '살인(殺人)', example2: '암살(暗殺)' },
+            { hanja: '三', eum: '삼', tteut: '석', example1: '삼월(三月)', example2: '삼각(三角)' },
+            { hanja: '常', eum: '상', tteut: '항상', example1: '항상(恒常)', example2: '일상(日常)' },
+            { hanja: '狀', eum: '상', tteut: '형상', example1: '상태(狀態)', example2: '상장(賞狀)' },
+            { hanja: '床', eum: '상', tteut: '평상', example1: '병상(病床)', example2: '기상(起床)' },
+            { hanja: '相', eum: '상', tteut: '서로', example1: '상대(相對)', example2: '상호(相互)' },
+            { hanja: '商', eum: '상', tteut: '장사', example1: '상업(商業)', example2: '상인(商人)' },
+            { hanja: '想', eum: '상', tteut: '생각', example1: '상상(想像)', example2: '감상(感想)' },
+            { hanja: '上', eum: '상', tteut: '위', example1: '옥상(屋上)', example2: '상하(上下)' },
+            { hanja: '色', eum: '색', tteut: '빛', example1: '색깔(色깔)', example2: '특색(特色)' },
+            { hanja: '生', eum: '생', tteut: '날', example1: '생일(生日)', example2: '학생(學生)' },
+            { hanja: '書', eum: '서', tteut: '쓸', example1: '독서(讀書)', example2: '서점(書店)' },
+            { hanja: '西', eum: '서', tteut: '서녘', example1: '서쪽(西쪽)', example2: '서양(西洋)' },
+            { hanja: '序', eum: '서', tteut: '차례', example1: '순서(順序)', example2: '질서(秩序)' },
+            { hanja: '徐', eum: '서', tteut: '천천할', example1: '서행(徐行)', example2: '서서히' },
+            { hanja: '石', eum: '석', tteut: '돌', example1: '보석(寶石)', example2: '석유(石油)' },
+            { hanja: '夕', eum: '석', tteut: '저녁', example1: '석양(夕陽)', example2: '추석(秋夕)' },
+            { hanja: '席', eum: '석', tteut: '자리', example1: '좌석(坐席)', example2: '출석(出席)' },
+            { hanja: '先', eum: '선', tteut: '먼저', example1: '선생(先生)', example2: '우선(優先)' },
+            { hanja: '船', eum: '선', tteut: '배', example1: '선박(船舶)', example2: '유람선(遊覽船)' },
+            { hanja: '仙', eum: '선', tteut: '신선', example1: '신선(神仙)', example2: '선녀(仙女)' },
+            { hanja: '線', eum: '선', tteut: '줄', example1: '직선(直線)', example2: '전선(電線)' },
+            { hanja: '選', eum: '선', tteut: '가릴', example1: '선택(選擇)', example2: '선수(選手)' },
+            { hanja: '鮮', eum: '선', tteut: '고울', example1: '신선(新鮮)', example2: '조선(朝鮮)' },
+            { hanja: '善', eum: '선', tteut: '착할', example1: '선행(善行)', example2: '개선(改善)' },
+            { hanja: '雪', eum: '설', tteut: '눈', example1: '백설(白雪)', example2: '대설(大雪)' },
+            { hanja: '說', eum: '설', tteut: '말씀', example1: '설명(說明)', example2: '소설(小說)' },
+            { hanja: '設', eum: '설', tteut: '베풀', example1: '설립(設立)', example2: '건설(建設)' },
+            { hanja: '星', eum: '성', tteut: '별', example1: '위성(衛星)', example2: '유성(流星)' },
+            { hanja: '省', eum: '성', tteut: '살필', example1: '반성(反省)', example2: '생략(省略)' },
+            { hanja: '城', eum: '성', tteut: '재', example1: '성곽(城郭)', example2: '만리장성(萬里長城)' },
+            // Page 6
+            { hanja: '値', eum: '치', tteut: '값', example1: '가치(價値)', example2: '수치(數値)' },
+            { hanja: '治', eum: '치', tteut: '다스릴', example1: '정치(政治)', example2: '치료(治療)' },
+            { hanja: '齒', eum: '치', tteut: '이', example1: '치과(齒科)', example2: '의치(義齒)' },
+            { hanja: '致', eum: '치', tteut: '이를', example1: '일치(一致)', example2: '치명적(致命的)' },
+            { hanja: '則', eum: '칙', tteut: '법', example1: '규칙(規則)', example2: '원칙(原則)' },
+            { hanja: '親', eum: '친', tteut: '친할', example1: '친구(親舊)', example2: '부친(父親)' },
+            { hanja: '七', eum: '칠', tteut: '일곱', example1: '칠월(七月)', example2: '칠성(七星)' },
+            { hanja: '快', eum: '쾌', tteut: '쾌할', example1: '상쾌(爽快)', example2: '유쾌(愉快)' },
+            { hanja: '他', eum: '타', tteut: '다를', example1: '타인(他人)', example2: '기타(其他)' },
+            { hanja: '打', eum: '타', tteut: '칠', example1: '타격(打擊)', example2: '안타(安打)' },
+            { hanja: '太', eum: '태', tteut: '클', example1: '태양(太陽)', example2: '태평(太平)' },
+            { hanja: '澤', eum: '택', tteut: '못', example1: '광택(光澤)', example2: '윤택(潤澤)' },
+            { hanja: '宅', eum: '택', tteut: '집', example1: '주택(住宅)', example2: '자택(自宅)' },
+            { hanja: '土', eum: '토', tteut: '흙', example1: '토지(土地)', example2: '국토(國土)' },
+            { hanja: '通', eum: '통', tteut: '통할', example1: '교통(交通)', example2: '보통(普通)' },
+            { hanja: '統', eum: '통', tteut: '거느릴', example1: '통일(統一)', example2: '대통령(大統領)' },
+            { hanja: '退', eum: '퇴', tteut: '물러날', example1: '후퇴(後退)', example2: '은퇴(隱退)' },
+            { hanja: '特', eum: '특', tteut: '특별할', example1: '특별(特別)', example2: '특기(特技)' },
+            { hanja: '破', eum: '파', tteut: '깨뜨릴', example1: '파괴(破壞)', example2: '돌파(突破)' },
+            { hanja: '波', eum: '파', tteut: '물결', example1: '파도(波濤)', example2: '음파(音波)' },
+            { hanja: '八', eum: '팔', tteut: '여덟', example1: '팔월(八月)', example2: '팔방(八方)' },
+            { hanja: '敗', eum: '패', tteut: '패할', example1: '실패(失敗)', example2: '승패(勝敗)' },
+            { hanja: '便', eum: '편', tteut: '편할', example1: '편리(便利)', example2: '우편(郵便)' },
+            { hanja: '平', eum: '평', tteut: '평평할', example1: '평화(平和)', example2: '평균(平均)' },
+            { hanja: '評', eum: '평', tteut: '평할', example1: '평가(評價)', example2: '비평(批評)' },
+            { hanja: '布', eum: '포', tteut: '베', example1: '분포(分布)', example2: '공포(公布)' },
+            { hanja: '包', eum: '포', tteut: '쌀', example1: '포장(包裝)', example2: '포함(包含)' },
+            { hanja: '暴', eum: '폭', tteut: '사나울', example1: '폭력(暴力)', example2: '폭풍(暴風)' },
+            { hanja: '表', eum: '표', tteut: '겉', example1: '표현(表現)', example2: '대표(代表)' },
+            { hanja: '票', eum: '표', tteut: '표', example1: '투표(投票)', example2: '우표(郵票)' },
+            { hanja: '品', eum: '품', tteut: '물건', example1: '상품(商品)', example2: '작품(作品)' },
+            { hanja: '風', eum: '풍', tteut: '바람', example1: '풍속(風俗)', example2: '태풍(颱風)' },
+            { hanja: '豊', eum: '풍', tteut: '풍년', example1: '풍부(豊富)', example2: '풍년(豊年)' },
+            { hanja: '必', eum: '필', tteut: '반드시', example1: '필수(必須)', example2: '필요(必要)' },
+            { hanja: '漢', eum: '한', tteut: '한수', example1: '한자(漢字)', example2: '한강(漢江)' },
+            { hanja: '限', eum: '한', tteut: '한정할', example1: '한계(限界)', example2: '제한(制限)' },
+            { hanja: '合', eum: '합', tteut: '합할', example1: '합격(合格)', example2: '집합(集合)' },
+            { hanja: '海', eum: '해', tteut: '바다', example1: '해외(海外)', example2: '해군(海軍)' },
+            { hanja: '解', eum: '해', tteut: '풀', example1: '해결(解決)', example2: '이해(理解)' },
+            { hanja: '害', eum: '해', tteut: '해칠', example1: '손해(損害)', example2: '공해(公害)' },
+            { hanja: '行', eum: '행', tteut: '다닐', example1: '행동(行動)', example2: '여행(旅行)' },
+            { hanja: '幸', eum: '행', tteut: '다행', example1: '행복(幸福)', example2: '불행(不幸)' },
+            { hanja: '鄕', eum: '향', tteut: '시골', example1: '고향(故鄕)', example2: '향수(鄕愁)' },
+            { hanja: '香', eum: '향', tteut: '향기', example1: '향기(香氣)', example2: '향수(香水)' },
+            { hanja: '向', eum: '향', tteut: '향할', example1: '방향(方向)', example2: '향상(向上)' },
+            { hanja: '虛', eum: '허', tteut: '빌', example1: '겸허(謙虛)', example2: '허무(虛無)' },
+            { hanja: '許', eum: '허', tteut: '허락할', example1: '허가(許可)', example2: '특허(特許)' },
+            { hanja: '現', eum: '현', tteut: '나타날', example1: '현재(現在)', example2: '표현(表現)' },
+            { hanja: '血', eum: '혈', tteut: '피', example1: '혈액(血液)', example2: '헌혈(獻血)' },
+            { hanja: '協', eum: '협', tteut: '화합할', example1: '협력(協力)', example2: '타협(妥協)' },
+            { hanja: '兄', eum: '형', tteut: '맏', example1: '형제(兄弟)', example2: '형님' },
+            { hanja: '形', eum: '형', tteut: '모양', example1: '형태(形態)', example2: '인형(人形)' },
+            { hanja: '刑', eum: '형', tteut: '형벌', example1: '형벌(刑罰)', example2: '사형(死刑)' },
+            { hanja: '惠', eum: '혜', tteut: '은혜', example1: '은혜(恩惠)', example2: '특혜(特惠)' },
+            { hanja: '呼', eum: '호', tteut: '부를', example1: '호흡(呼吸)', example2: '호출(呼出)' },
+            { hanja: '湖', eum: '호', tteut: '호수', example1: '호수(湖水)', example2: '강호(江湖)' },
+            { hanja: '號', eum: '호', tteut: '이름', example1: '번호(番號)', example2: '신호(信號)' },
+            { hanja: '好', eum: '호', tteut: '좋을', example1: '호감(好感)', example2: '선호(選好)' },
+            { hanja: '戶', eum: '호', tteut: '지게', example1: '호구(戶口)', example2: '가호(家戶)' },
+            { hanja: '紅', eum: '홍', tteut: '붉을', example1: '홍색(紅色)', example2: '홍차(紅茶)' },
+            { hanja: '花', eum: '화', tteut: '꽃', example1: '화초(花草)', example2: '국화(菊花)' },
+            { hanja: '話', eum: '화', tteut: '말씀', example1: '대화(對話)', example2: '전화(電話)' },
+            { hanja: '和', eum: '화', tteut: '화할', example1: '평화(平和)', example2: '화목(和睦)' },
+            { hanja: '畫', eum: '화/획', tteut: '그림', example1: '영화(映畫)', example2: '계획(計劃)' },
+            { hanja: '化', eum: '화', tteut: '될', example1: '변화(變化)', example2: '문화(文化)' },
+            { hanja: '火', eum: '화', tteut: '불', example1: '화재(火災)', example2: '화산(火山)' },
+            { hanja: '貨', eum: '화', tteut: '재화', example1: '화물(貨物)', example2: '백화점(百貨店)' },
+            { hanja: '患', eum: '환', tteut: '근심', example1: '환자(患者)', example2: '우환(憂患)' },
+            { hanja: '活', eum: '활', tteut: '살', example1: '생활(生活)', example2: '활동(活動)' },
+            { hanja: '回', eum: '회', tteut: '돌', example1: '회전(回轉)', example2: '회복(回復)' },
+            { hanja: '會', eum: '회', tteut: '모일', example1: '회의(會議)', example2: '회사(會社)' },
+            { hanja: '效', eum: '효', tteut: '본받을', example1: '효과(效果)', example2: '효율(效率)' },
+            { hanja: '後', eum: '후', tteut: '뒤', example1: '오후(午後)', example2: '후회(後悔)' },
+            { hanja: '訓', eum: '훈', tteut: '가르칠', example1: '훈련(訓練)', example2: '교훈(敎訓)' },
+            { hanja: '休', eum: '휴', tteut: '쉴', example1: '휴식(休息)', example2: '휴일(休日)' },
+            { hanja: '黑', eum: '흑', tteut: '검을', example1: '흑백(黑白)', example2: '암흑(暗黑)' },
+            { hanja: '興', eum: '흥', tteut: '일', example1: '흥미(興味)', example2: '부흥(復興)' },
+            { hanja: '吸', eum: '흡', tteut: '마실', example1: '흡수(吸收)', example2: '호흡(呼吸)' },
+            { hanja: '希', eum: '희', tteut: '바랄', example1: '희망(希望)', example2: '희귀(稀貴)' },
+            // Page 7
+            { hanja: '聲', eum: '성', tteut: '소리', example1: '목소리', example2: '명성(名聲)' },
+            { hanja: '成', eum: '성', tteut: '이룰', example1: '성공(成功)', example2: '완성(完成)' },
+            { hanja: '誠', eum: '성', tteut: '정성', example1: '정성(誠心)', example2: '성실(誠實)' },
+            { hanja: '姓', eum: '성', tteut: '성', example1: '성명(姓名)', example2: '백성(百姓)' },
+            { hanja: '聖', eum: '성', tteut: '성인', example1: '성인(聖人)', example2: '신성(神聖)' },
+            { hanja: '性', eum: '성', tteut: '성품', example1: '성격(性格)', example2: '성별(性別)' },
+            { hanja: '盛', eum: '성', tteut: '성할', example1: '번성(繁盛)', example2: '성대(盛大)' },
+            { hanja: '細', eum: '세', tteut: '가늘', example1: '세밀(細密)', example2: '상세(詳細)' },
+            { hanja: '稅', eum: '세', tteut: '세금', example1: '세금(稅金)', example2: '관세(關稅)' },
+            { hanja: '洗', eum: '세', tteut: '씻을', example1: '세수(洗手)', example2: '세탁(洗濯)' },
+            { hanja: '世', eum: '세', tteut: '인간', example1: '세계(世界)', example2: '세상(世上)' },
+            { hanja: '歲', eum: '세', tteut: '해', example1: '세월(歲月)', example2: '만세(萬歲)' },
+            { hanja: '勢', eum: '세', tteut: '기세', example1: '세력(勢力)', example2: '대세(大勢)' },
+            { hanja: '消', eum: '소', tteut: '사라질', example1: '소비(消費)', example2: '소화(消化)' },
+            { hanja: '所', eum: '소', tteut: '바', example1: '장소(場所)', example2: '주소(住所)' },
+            { hanja: '笑', eum: '소', tteut: '웃음', example1: '미소(微笑)', example2: '폭소(爆笑)' },
+            { hanja: '小', eum: '소', tteut: '작을', example1: '소형(小型)', example2: '대소(大小)' },
+            { hanja: '少', eum: '소', tteut: '적을', example1: '소년(少年)', example2: '감소(減少)' },
+            { hanja: '速', eum: '속', tteut: '빠를', example1: '속도(速度)', example2: '고속(高速)' },
+            { hanja: '續', eum: '속', tteut: '이을', example1: '계속(繼續)', example2: '연속(連續)' },
+            { hanja: '俗', eum: '속', tteut: '풍속', example1: '풍속(風俗)', example2: '속담(俗談)' },
+            { hanja: '孫', eum: '손', tteut: '손자', example1: '자손(子孫)', example2: '후손(後孫)' },
+            { hanja: '送', eum: '송', tteut: '보낼', example1: '방송(放送)', example2: '전송(電送)' },
+            { hanja: '收', eum: '수', tteut: '거둘', example1: '수입(收入)', example2: '회수(回收)' },
+            { hanja: '樹', eum: '수', tteut: '나무', example1: '수목(樹木)', example2: '가로수(街路樹)' },
+            { hanja: '修', eum: '수', tteut: '닦을', example1: '수리(修理)', example2: '수정(修正)' },
+            { hanja: '首', eum: '수', tteut: '머리', example1: '수도(首都)', example2: '수석(首席)' },
+            { hanja: '須', eum: '수', tteut: '모름지기', example1: '필수(必須)', example2: '수유(須臾)' },
+            { hanja: '水', eum: '수', tteut: '물', example1: '수영(水泳)', example2: '음료수(飮料水)' },
+            { hanja: '秀', eum: '수', tteut: '빼어날', example1: '우수(優秀)', example2: '수재(秀才)' },
+            { hanja: '授', eum: '수', tteut: '줄', example1: '수업(授業)', example2: '교수(敎授)' },
+            { hanja: '受', eum: '수', tteut: '받을', example1: '수상(受賞)', example2: '수신(受信)' },
+            { hanja: '數', eum: '수', tteut: '셈', example1: '숫자(數字)', example2: '수학(數學)' },
+            { hanja: '手', eum: '수', tteut: '손', example1: '선수(選手)', example2: '악수(握手)' },
+            { hanja: '宿', eum: '숙', tteut: '잘', example1: '숙제(宿題)', example2: '기숙사(寄宿舍)' },
+            { hanja: '純', eum: '순', tteut: '순수할', example1: '순수(純粹)', example2: '단순(單純)' },
+            { hanja: '順', eum: '순', tteut: '순할', example1: '순서(順序)', example2: '순종(順從)' },
+            { hanja: '述', eum: '술', tteut: '지을', example1: '서술(敍述)', example2: '진술(陳述)' },
+            { hanja: '術', eum: '술', tteut: '재주', example1: '기술(技術)', example2: '미술(美術)' },
+            { hanja: '習', eum: '습', tteut: '익힐', example1: '학습(學習)', example2: '연습(練習)' },
+            { hanja: '拾', eum: '습', tteut: '주울', example1: '수습(拾得)', example2: '습득(拾得)' },
+            { hanja: '勝', eum: '승', tteut: '이길', example1: '승리(勝利)', example2: '우승(優勝)' },
+            { hanja: '承', eum: '승', tteut: '이을', example1: '계승(繼承)', example2: '승인(承認)' },
+            { hanja: '詩', eum: '시', tteut: '시', example1: '시인(詩人)', example2: '한시(漢詩)' },
+            { hanja: '時', eum: '시', tteut: '때', example1: '시간(時間)', example2: '시작(始作)' },
+            { hanja: '施', eum: '시', tteut: '베풀', example1: '실시(實施)', example2: '시행(施行)' },
+            { hanja: '示', eum: '시', tteut: '보일', example1: '표시(表示)', example2: '게시(揭示)' },
+            { hanja: '視', eum: '시', tteut: '볼', example1: '시력(視力)', example2: '무시(無視)' },
+            { hanja: '始', eum: '시', tteut: '비로소', example1: '시작(始作)', example2: '개시(開始)' },
+            { hanja: '試', eum: '시', tteut: '시험', example1: '시험(試驗)', example2: '시합(試合)' },
+            { hanja: '是', eum: '시', tteut: '이', example1: '시정(是正)', example2: '국시(國是)' },
+            { hanja: '市', eum: '시', tteut: '저자', example1: '도시(都市)', example2: '시장(市場)' },
+            { hanja: '食', eum: '식', tteut: '밥', example1: '식사(食事)', example2: '음식(飮食)' },
+            { hanja: '息', eum: '식', tteut: '쉴', example1: '휴식(休息)', example2: '안식(安息)' },
+            { hanja: '申', eum: '신', tteut: '펼', example1: '신고(申告)', example2: '신청(申請)' },
+            { hanja: '神', eum: '신', tteut: '귀신', example1: '정신(精神)', example2: '신화(神話)' },
+            { hanja: '身', eum: '신', tteut: '몸', example1: '신체(身體)', example2: '자신(自身)' },
+            { hanja: '信', eum: '신', tteut: '믿을', example1: '신용(信用)', example2: '통신(通信)' },
+            { hanja: '新', eum: '신', tteut: '새', example1: '신문(新聞)', example2: '최신(最新)' },
+            { hanja: '臣', eum: '신', tteut: '신하', example1: '충신(忠臣)', example2: '대신(大臣)' },
+            { hanja: '室', eum: '실', tteut: '집', example1: '교실(敎室)', example2: '실내(室內)' },
+            { hanja: '實', eum: '실', tteut: '열매', example1: '사실(事實)', example2: '실시(實施)' },
+            { hanja: '失', eum: '실', tteut: '잃을', example1: '실패(失敗)', example2: '실수(失手)' },
+            { hanja: '深', eum: '심', tteut: '깊을', example1: '심각(深刻)', example2: '심야(深夜)' },
+            { hanja: '心', eum: '심', tteut: '마음', example1: '중심(中心)', example2: '관심(關心)' },
+            { hanja: '十', eum: '십', tteut: '열', example1: '십년(十年)', example2: '십중팔구(十中八九)' },
+            { hanja: '氏', eum: '씨', tteut: '성', example1: '김씨(金氏)', example2: '씨족(氏族)' },
+            { hanja: '兒', eum: '아', tteut: '아이', example1: '소아과(小兒科)', example2: '아동(兒童)' },
+            { hanja: '惡', eum: '악', tteut: '악할', example1: '악마(惡魔)', example2: '최악(最惡)' },
+            { hanja: '顔', eum: '안', tteut: '얼굴', example1: '안면(顔面)', example2: '세안(洗顔)' },
+            { hanja: '安', eum: '안', tteut: '편안할', example1: '안전(安全)', example2: '안심(安心)' },
+            { hanja: '眼', eum: '안', tteut: '눈', example1: '안경(眼鏡)', example2: '안과(眼科)' },
+            { hanja: '案', eum: '안', tteut: '책상', example1: '안내(案內)', example2: '제안(提案)' },
+            { hanja: '暗', eum: '암', tteut: '어두울', example1: '암흑(暗黑)', example2: '암기(暗記)' },
+            { hanja: '哀', eum: '애', tteut: '슬플', example1: '애도(哀悼)', example2: '비애(悲哀)' },
+            { hanja: '愛', eum: '애', tteut: '사랑', example1: '애정(愛情)', example2: '애국(愛國)' },
+            { hanja: '野', eum: '야', tteut: '들', example1: '야구(野球)', example2: '야외(野外)' },
+            { hanja: '夜', eum: '야', tteut: '밤', example1: '야간(夜間)', example2: '심야(深夜)' },
+            { hanja: '若', eum: '약', tteut: '같을', example1: '약간(若干)', example2: '만약(萬若)' },
+            { hanja: '藥', eum: '약', tteut: '약', example1: '약국(藥局)', example2: '보약(補藥)' },
+            { hanja: '弱', eum: '약', tteut: '약할', example1: '약점(弱點)', example2: '강약(強弱)' },
+            { hanja: '約', eum: '약', tteut: '맺을', example1: '약속(約束)', example2: '예약(豫約)' },
+            { hanja: '陽', eum: '양', tteut: '볕', example1: '태양(太陽)', example2: '양지(陽地)' },
+            { hanja: '羊', eum: '양', tteut: '양', example1: '양모(羊毛)', example2: '산양(山羊)' },
+            { hanja: '洋', eum: '양', tteut: '바다', example1: '서양(西洋)', example2: '태평양(太平洋)' },
+            { hanja: '養', eum: '양', tteut: '기를', example1: '양육(養育)', example2: '영양(營養)' },
+            { hanja: '讓', eum: '양', tteut: '사양할', example1: '양보(讓步)', example2: '겸양(謙讓)' },
+            { hanja: '魚', eum: '어', tteut: '고기', example1: '어류(魚類)', example2: '인어(人魚)' },
+            { hanja: '漁', eum: '어', tteut: '고기 잡을', example1: '어부(漁夫)', example2: '어업(漁業)' },
+            { hanja: '語', eum: '어', tteut: '말씀', example1: '언어(言語)', example2: '영어(英語)' },
+            { hanja: '億', eum: '억', tteut: '억', example1: '수억(數億)', example2: '억만(億萬)' },
+            { hanja: '言', eum: '언', tteut: '말씀', example1: '언어(言語)', example2: '유언(遺言)' },
+            { hanja: '業', eum: '업', tteut: '업', example1: '산업(産業)', example2: '직업(職業)' },
+            { hanja: '如', eum: '여', tteut: '같을', example1: '여전(如前)', example2: '여실(如實)' },
+            { hanja: '予', eum: '여', tteut: '나', example1: '부여(附與)', example2: '하사(下賜)하다' },
+            { hanja: '然', eum: '연', tteut: '그러할', example1: '자연(自然)', example2: '당연(當然)' },
+            { hanja: '煙', eum: '연', tteut: '연기', example1: '금연(禁煙)', example2: '연기(煙氣)' },
+            { hanja: '硏', eum: '연', tteut: '갈', example1: '연구(硏究)', example2: '연마(硏磨)' },
+            { hanja: '悅', eum: '열', tteut: '기쁠', example1: '희열(喜悅)', example2: '열복(悅服)' },
+            { hanja: '熱', eum: '열', tteut: '더울', example1: '열정(熱情)', example2: '열기(熱氣)' },
+            { hanja: '餘', eum: '여', tteut: '남을', example1: '여유(餘裕)', example2: '나머지' },
+            { hanja: '汝', eum: '여', tteut: '너', example1: '여등(汝等)', example2: '너' },
+            { hanja: '與', eum: '여', tteut: '더불', example1: '참여(參與)', example2: '여당(與黨)' },
+            { hanja: '逆', eum: '역', tteut: '거스를', example1: '역행(逆行)', example2: '반역(反逆)' },
+            { hanja: '易', eum: '역/이', tteut: '바꿀/쉬울', example1: '무역(貿易)', example2: '용이(容易)' }
+        ];
+
+        // DOM Elements
+        const dom = {
+            modeTitle: document.getElementById('modeTitle'),
+            progress: document.getElementById('progress'),
+            progressBar: document.getElementById('progressBar'),
+            score: document.getElementById('score'),
+            hanjaQuestion: document.getElementById('hanja-question'),
+            optionsContainer: document.getElementById('options-container'),
+            answerDetails: document.getElementById('answer-details'),
+            detailTteut: document.getElementById('detail-tteut'),
+            detailEum: document.getElementById('detail-eum'),
+            detailExample1: document.getElementById('detail-example1'),
+            detailExample2: document.getElementById('detail-example2'),
+            nextBtn: document.getElementById('nextBtn'),
+            reviewBtn: document.getElementById('reviewBtn'),
+            incorrectCount: document.getElementById('incorrectCount'),
+            restartBtn: document.getElementById('restartBtn'),
+            restartBtnText: document.getElementById('restartBtnText'),
+            resultModal: document.getElementById('resultModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalMessage: document.getElementById('modalMessage'),
+            modalCloseBtn: document.getElementById('modalCloseBtn'),
+        };
+
+        // Sound Effects
+        let correctSynth, incorrectSynth;
+        document.body.addEventListener('click', () => {
+            if (Tone.context.state !== 'running') Tone.context.resume();
+            if (!correctSynth) {
+                correctSynth = new Tone.Synth().toDestination();
+                incorrectSynth = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 } }).toDestination();
+            }
+        }, { once: true });
+
+        // Game State
+        const state = {
+            score: 0,
+            mainQuizScore: 0,
+            incorrectIndices: new Set(),
+            mainQuizList: [],
+            reviewQuizList: [],
+            mainQuizCurrentIndex: 0,
+            reviewQuizCurrentIndex: 0,
+            isReviewMode: false,
+        };
+        
+        // Remove duplicates from raw data
+        const masterList = [...new Map(hanjaData.map(item => [item.hanja, item])).values()];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startMainQuiz(isRestart = true) {
+            if (isRestart) {
+                state.mainQuizList = Array.from({ length: masterList.length }, (_, i) => i);
+                shuffleArray(state.mainQuizList);
+                state.mainQuizCurrentIndex = 0;
+                state.mainQuizScore = 0;
+                state.incorrectIndices.clear();
+            }
+            state.isReviewMode = false;
+            state.score = state.mainQuizScore;
+            
+            updateUIForModeChange();
+            displayQuestion();
+        }
+        
+        function startReviewQuiz() {
+            if (state.incorrectIndices.size === 0) {
+                showModal("복습 완료!", "틀린 한자가 하나도 없어요! 참 잘했어요!");
+                return;
+            }
+            state.isReviewMode = true;
+            state.mainQuizScore = state.score; // Save main quiz score
+            state.score = 0; // Reset score for review session
+            state.reviewQuizList = [...state.incorrectIndices];
+            shuffleArray(state.reviewQuizList);
+            state.reviewQuizCurrentIndex = 0;
+
+            updateUIForModeChange();
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            // Hide details from previous question
+            dom.answerDetails.classList.add('hidden', 'opacity-0');
+            dom.nextBtn.classList.add('hidden', 'opacity-0');
+            dom.optionsContainer.classList.remove('disabled-options');
+            
+            const list = state.isReviewMode ? state.reviewQuizList : state.mainQuizList;
+            const index = state.isReviewMode ? state.reviewQuizCurrentIndex : state.mainQuizCurrentIndex;
+
+            if (index >= list.length) {
+                const title = state.isReviewMode ? "복습 완료!" : "퀴즈 완료!";
+                const message = `총 ${list.length}문제 중 ${state.score}개를 맞혔어요!`;
+                showModal(title, message);
+                return;
+            }
+
+            const hanjaIndex = list[index];
+            const correctAnswer = masterList[hanjaIndex];
+            
+            dom.hanjaQuestion.textContent = correctAnswer.hanja;
+            updateProgress();
+
+            const options = new Set([hanjaIndex]);
+            while (options.size < 4) {
+                const randomIndex = Math.floor(Math.random() * masterList.length);
+                if(randomIndex !== hanjaIndex) options.add(randomIndex);
+            }
+
+            const shuffledOptions = [...options];
+            shuffleArray(shuffledOptions);
+
+            dom.optionsContainer.innerHTML = '';
+            shuffledOptions.forEach(optIndex => {
+                const optionData = masterList[optIndex];
+                const button = document.createElement('button');
+                button.className = "option-btn w-full text-left p-4 rounded-xl";
+                button.innerHTML = `<span class="font-bold text-slate-700">${optionData.tteut}</span> <span class="text-slate-500">(${optionData.eum})</span>`;
+                button.onclick = () => checkAnswer(optIndex === hanjaIndex, button);
+                dom.optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(isCorrect, button) {
+            dom.optionsContainer.classList.add('disabled-options');
+            
+            const list = state.isReviewMode ? state.reviewQuizList : state.mainQuizList;
+            const index = state.isReviewMode ? state.reviewQuizCurrentIndex : state.mainQuizCurrentIndex;
+            const hanjaIndex = list[index];
+            const correctAnswerData = masterList[hanjaIndex];
+
+            if (isCorrect) {
+                state.score++;
+                button.classList.add('correct');
+                if(correctSynth) correctSynth.triggerAttackRelease("C5", "8n", Tone.now());
+                if (state.isReviewMode) {
+                    state.incorrectIndices.delete(hanjaIndex);
+                }
+            } else {
+                button.classList.add('incorrect');
+                if(incorrectSynth) incorrectSynth.triggerAttackRelease("C3", "8n", Tone.now());
+                if (!state.isReviewMode) {
+                    state.incorrectIndices.add(hanjaIndex);
+                }
+                Array.from(dom.optionsContainer.children).forEach(btn => {
+                    const btnTteut = btn.querySelector('.font-bold').textContent;
+                    if (btnTteut === correctAnswerData.tteut) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            updateScoreAndCounts();
+            showAnswerDetails(correctAnswerData);
+        }
+
+        function showAnswerDetails(data) {
+            dom.detailTteut.textContent = data.tteut;
+            dom.detailEum.textContent = `(${data.eum})`;
+            dom.detailExample1.textContent = data.example1;
+            dom.detailExample2.textContent = data.example2 || ''; // Handle cases with one example
+            dom.answerDetails.classList.remove('hidden');
+            setTimeout(() => dom.answerDetails.classList.remove('opacity-0'), 50);
+            dom.nextBtn.classList.remove('hidden');
+            setTimeout(() => dom.nextBtn.classList.remove('opacity-0'), 50);
+        }
+        
+        function goToNextQuestion() {
+             if (state.isReviewMode) {
+                 state.reviewQuizCurrentIndex++;
+             } else {
+                 state.mainQuizCurrentIndex++;
+             }
+             displayQuestion();
+        }
+
+        function updateUIForModeChange() {
+            if (state.isReviewMode) {
+                dom.modeTitle.textContent = "틀린 한자 복습";
+                dom.restartBtnText.textContent = "퀴즈로 돌아가기";
+            } else {
+                dom.modeTitle.textContent = "한자 퀴즈";
+                dom.restartBtnText.textContent = "처음부터";
+            }
+            updateScoreAndCounts();
+        }
+
+        function updateScoreAndCounts() {
+            dom.score.textContent = state.score;
+            dom.incorrectCount.textContent = state.incorrectIndices.size;
+            dom.reviewBtn.classList.toggle('disabled', state.incorrectIndices.size === 0);
+            dom.reviewBtn.disabled = state.incorrectIndices.size === 0;
+        }
+        
+        function updateProgress() {
+            const list = state.isReviewMode ? state.reviewQuizList : state.mainQuizList;
+            const index = state.isReviewMode ? state.reviewQuizCurrentIndex : state.mainQuizCurrentIndex;
+            const total = list.length > 0 ? list.length : masterList.length;
+            const current = index + 1;
+            const percentage = total > 0 ? (current / total) * 100 : 0;
+            dom.progressBar.style.width = `${percentage}%`;
+            dom.progress.textContent = `${current} / ${total}`;
+        }
+
+        function showModal(title, message) {
+            dom.modalTitle.textContent = title;
+            dom.modalMessage.textContent = message;
+            dom.resultModal.classList.remove('hidden');
+            setTimeout(() => {
+                dom.resultModal.firstElementChild.style.opacity = 1;
+                dom.resultModal.firstElementChild.style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        // Event Listeners
+        dom.reviewBtn.addEventListener('click', () => {
+            if (state.incorrectIndices.size > 0 && !state.isReviewMode) startReviewQuiz();
+        });
+        dom.restartBtn.addEventListener('click', () => {
+            if (state.isReviewMode) {
+                startMainQuiz(false); // Resume main quiz
+            } else {
+                startMainQuiz(true); // Restart main quiz from scratch
+            }
+        });
+        dom.nextBtn.addEventListener('click', goToNextQuestion);
+        dom.modalCloseBtn.addEventListener('click', () => {
+            dom.resultModal.firstElementChild.style.opacity = 0;
+            dom.resultModal.firstElementChild.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                dom.resultModal.classList.add('hidden');
+                startMainQuiz(true);
+            }, 300);
+        });
+
+        // Initial start
+        startMainQuiz(true);
+    </script>
+</body>
+</html>
